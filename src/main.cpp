@@ -4,9 +4,15 @@
 
 #include <iostream>
 
-int main()
+int main(int argc, char** argv)
 {
-    Luntik::Game* game = new Luntik::Game();
+    std::string ip = "0";
+
+    if (argc == 2) {
+        ip = argv[1];
+    }
+
+    Luntik::Game* game = new Luntik::Game(ip);
     int exit_code = game->run();
 
     std::cout << "Exit code: " << exit_code << std::endl;

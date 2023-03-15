@@ -28,7 +28,13 @@
 namespace Luntik {
     class Game {
     public:
-        Game() {
+        Game(const std::string& ip) {
+            if (ip == "0") {
+                m_Ip = sf::IpAddress::getLocalAddress();
+            } else {
+                m_Ip = sf::IpAddress(ip);
+            }
+
             Renderer::Textures::loadTextures();
             Renderer::Animations::loadAnimations();
             Renderer::Fonts::loadFonts();
@@ -151,7 +157,7 @@ namespace Luntik {
     private:
         void initClient() {
             if (m_Client.get() == nullptr) {
-                m_Client = std::make_unique<Client>(m_ScreenMainGame.get(), 13553, sf::IpAddress::getLocalAddress());
+                m_Client = std::make_unique<Client>(m_ScreenMainGame.get(), 13553, m_Ip);
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");
@@ -194,6 +200,8 @@ namespace Luntik {
         }
 
         Utils::Logger LOGGER{"Luntik"};
+
+        sf::IpAddress m_Ip;
 
         sf::Clock timer;
 
