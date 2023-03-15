@@ -73,22 +73,24 @@ namespace Luntik {
                     case Renderer::Screens::MAIN_GAME_SCREEN:
                         if (m_Client.get()) {
                             if (m_Client->getConnectionStatus() != CONNECTED) {
-                                std::string text = "";
+                                std::string disconnectMessage = "";
                                 switch (m_Client->getConnectionStatus()) {
                                     case DISCONNECTED:
-                                        text = "Disconnected";
+                                        disconnectMessage = "Disconnected";
                                         break;
 
                                     case FAILED_TO_CONNECT:
-                                        text = "Couldn't connect";
+                                        disconnectMessage = "Couldn't connect";
                                         break;
 
                                     default:
-                                        text = "Something went wrong";
+                                        disconnectMessage = "Something went wrong";
                                         break;
                                 }
-                                m_ScreenDisconnected->disconnectedText->setText(text);
+                                m_ScreenDisconnected->disconnectedText->setText(disconnectMessage);
                                 m_Renderer->setScreen(m_ScreenDisconnected.get());
+
+                                m_ScreenMainGame.reset(new Renderer::Screens::MainGameScreen());
                                 m_Client.reset();
                                 {
                                     std::lock_guard<std::mutex> lock(m_RunServerMutex);

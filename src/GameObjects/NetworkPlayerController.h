@@ -17,7 +17,7 @@ namespace Luntik::GameObjects {
 
         void setGoal(Utils::vec2 goal) {
             m_Goal = goal;
-            m_Step = (m_Goal - m_Player->getPos()) * (Settings::SEND_POS_RATE * 0.8);
+            m_Step = (m_Goal - m_Player->getPos()) * Settings::SEND_POS_RATE;
 
             m_ShouldInterpolate = true;
         }

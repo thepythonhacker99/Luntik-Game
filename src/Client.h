@@ -80,8 +80,6 @@ namespace Luntik {
 
         void stop() {
             m_Client.stop();
-            m_GameScreen->otherPlayers.clear();
-            m_GameScreen->setCameraPos(Utils::vec2(0, 0));
             m_ConnectionStatus = NOT_CONNECTED;
         }
 
