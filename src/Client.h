@@ -144,7 +144,7 @@ namespace Luntik {
 
                 m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
             } catch (const std::exception& e) {
-                LOGGER.log(std::string("Error while handling a new player: ") + e.what());
+                LOGGER.log(std::string("Error while handling a new position packet: ") + e.what());
             }
         }
 

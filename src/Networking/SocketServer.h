@@ -239,12 +239,18 @@ namespace Luntik::Network {
 
             m_ListenerThread = std::thread(
                 [this]() {
+                    bool shouldExit = false;
+                    
                     while (true) {
                         {
                             std::lock_guard<std::mutex> lock(m_ListenMutex);
                             if (!m_Listen) {
-                                break;
+                                shouldExit = true;
                             }
+                        }
+
+                        if (shouldExit) {
+                            break;
                         }
 
                         // accept clients
