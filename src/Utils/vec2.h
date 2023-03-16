@@ -50,19 +50,19 @@ namespace Luntik::Utils {
             return "x: " + std::to_string(this->x) + " y: " + std::to_string(this->y);
         }
 
-        vec2 operator+(vec2 vec) {
+        vec2 operator+(const vec2& vec) {
             return vec2(x + vec.x, y + vec.y);
         }
 
-        vec2 operator-(vec2 vec) {
+        vec2 operator-(const vec2& vec) {
             return vec2(x - vec.x, y - vec.y);
         }
 
-        vec2 operator*(vec2 vec) {
+        vec2 operator*(const vec2& vec) {
             return vec2(x * vec.x, y * vec.y);
         }
 
-        vec2 operator/(vec2 vec) {
+        vec2 operator/(const vec2& vec) {
             return vec2(x / vec.x, y / vec.y);
         }
 
@@ -85,37 +85,45 @@ namespace Luntik::Utils {
 
         ////////////////////////////////////////////////////////////////
 
-        operator+=(vec2 vec) {
+        vec2& operator+=(const vec2& vec) {
             x += vec.x; y += vec.y;
+            return *this;
         }
 
-        operator-=(vec2 vec) {
+        vec2& operator-=(const vec2& vec) {
             x -= vec.x; y -= vec.y;
+            return *this;
         }
 
-        operator*=(vec2 vec) {
+        vec2& operator*=(const vec2& vec) {
             x *= vec.x; y *= vec.y;
+            return *this;
         }
 
-        operator/=(vec2 vec) {
+        vec2& operator/=(const vec2& vec) {
             x /= vec.x; y /= vec.y;
+            return *this;
         }
 
 
-        operator+=(float n) {
+        vec2& operator+=(float n) {
             x += n; y += n;
+            return *this;
         }
 
-        operator-=(float n) {
+        vec2& operator-=(float n) {
             x -= n; y -= n;
+            return *this;
         }
 
-        operator*=(float n) {
+        vec2& operator*=(float n) {
             x *= n; y *= n;
+            return *this;
         }
 
-        operator/=(float n) {
+        vec2& operator/=(float n) {
             x *= n; y *= n;
+            return *this;
         }
 
         ////////////////////////////////////////////////////////////////
@@ -145,27 +153,27 @@ namespace Luntik::Utils {
         }
 
 
-        bool operator==(vec2 v) {
+        bool operator==(const vec2& v) {
             return x == v.x && y == v.y;
         }
 
-        bool operator!=(vec2 v) {
+        bool operator!=(const vec2& v) {
             return x != v.x || y != v.y;
         }
 
-        bool operator<(vec2 v) {
+        bool operator<(const vec2& v) {
             return x < v.x && y < v.y;
         }
 
-        bool operator<=(vec2 v) {
+        bool operator<=(const vec2& v) {
             return x <= v.x && y <= v.y;
         }
 
-        bool operator>(vec2 v) {
+        bool operator>(const vec2& v) {
             return x > v.x && y > v.y;
         }
 
-        bool operator>=(vec2 v) {
+        bool operator>=(const vec2& v) {
             return x >= v.x && y >= v.y;
         }
 
