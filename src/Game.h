@@ -179,13 +179,19 @@ namespace Luntik {
                     std::unique_ptr<Server> server = std::make_unique<Server>(13553, sf::IpAddress::getLocalAddress());
                     Utils::frame_rater<Settings::SEND_POS_RATE> fps;
 
+                    bool stopServer = false;
+
                     while (true) {
                         {
                             std::lock_guard<std::mutex> lock(*runServerMutex);
                             if (!*runServer) {
-                                server->stop();
-                                break;
+                                stopServer = true;
                             }
+                        }
+                        
+                        if (stopServer) {
+                            server->stop();
+                            break;
                         }
 
                         // server stuff
