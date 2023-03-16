@@ -10,7 +10,6 @@ FetchContent_MakeAvailable(SFML)
 set(ADDONS_DIR ./lib/sfml_addons)
 
 file(GLOB_RECURSE sources
-    "stc/*.h"
     "src/*.cpp"
 )
 add_executable(Luntik ${sources})
