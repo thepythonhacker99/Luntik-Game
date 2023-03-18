@@ -32,7 +32,7 @@ namespace Luntik::Renderer {
             m_Window->getSFMLWindow()->clear(sf::Color::Magenta);
 
             if (m_Screen) {
-                m_Screen->render(m_Window.get(), deltaTime);
+                m_Screen->render(deltaTime);
             }
 
             m_Window->getSFMLWindow()->display();

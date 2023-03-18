@@ -5,6 +5,6 @@
 namespace Luntik::Renderer {
     class RenderedObject {
     public:
-        virtual void render(Luntik::Renderer::Window* window, float deltaTime) {}
+        virtual void render(float deltaTime) {}
     };
 }

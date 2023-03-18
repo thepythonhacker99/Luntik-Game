@@ -9,4 +9,8 @@ namespace Luntik::Renderer::Fonts {
         s_NormalFont = new BitmapFont();
         s_NormalFont->loadFromFile("images/font.png");
     }
+
+    static void unloadFonts() {
+        delete s_NormalFont;
+    }
 }

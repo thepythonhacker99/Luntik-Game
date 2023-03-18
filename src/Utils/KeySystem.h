@@ -1,9 +1,10 @@
 #pragma once
 
 #include "SFML/Window.hpp"
-#include <unordered_map>
 
 #include "../Renderer/Window.h"
+
+#include <unordered_map>
 
 namespace Luntik::Utils::KeySystem {
     class KeySystem;
@@ -18,7 +19,7 @@ namespace Luntik::Utils::KeySystem {
     
     class KeySystem {
         public:
-            KeySystem(Renderer::Window* window) : m_Window(window) {}
+            KeySystem() = default;
 
             KeyState keyState(sf::Keyboard::Key key) {
                 if (keys.find(key) == keys.end())
@@ -29,7 +30,7 @@ namespace Luntik::Utils::KeySystem {
 
             void update() {
                 for (auto& [key, wasPressed] : keys) {
-                    if (m_Window->getSFMLWindow()->hasFocus()) {
+                    if (s_Renderer->getWindow()->getSFMLWindow()->hasFocus()) {
                         switch (wasPressed) {
                             case NOT_PRESSED:
                                 keys[key] = sf::Keyboard::isKeyPressed(key) == true ? JUST_PRESSED : NOT_PRESSED;
@@ -48,7 +49,7 @@ namespace Luntik::Utils::KeySystem {
                     }
                 }
 
-                if (m_Window->getSFMLWindow()->hasFocus()) {
+                if (s_Renderer->getWindow()->getSFMLWindow()->hasFocus()) {
                     switch (mouseLeft) {
                         case NOT_PRESSED:
                             mouseLeft = sf::Mouse::isButtonPressed(sf::Mouse::Left) == true ? JUST_PRESSED : NOT_PRESSED;
@@ -81,13 +82,10 @@ namespace Luntik::Utils::KeySystem {
             std::unordered_map<sf::Keyboard::Key, KeyState> keys;
             KeyState mouseLeft = NOT_PRESSED;
             KeyState mouseRight = NOT_PRESSED;
-        
-        private:
-            Renderer::Window* m_Window;
     };
 
-    static void initializeKeySystem(Renderer::Window* window) {
-        s_KeySystem = new KeySystem(window);
+    static void initializeKeySystem() {
+        s_KeySystem = new KeySystem();
     }
 
 }

@@ -3,6 +3,7 @@
 #include "Game.h"
 
 #include <iostream>
+#include <crtdbg.h>
 
 int main(int argc, char** argv)
 {
@@ -14,9 +15,10 @@ int main(int argc, char** argv)
 
     Luntik::Game* game = new Luntik::Game(ip);
     int exit_code = game->run();
-
+    
     std::cout << "Exit code: " << exit_code << std::endl;
     // std::cin.ignore();
 
     return exit_code;
+    // return 0;
 }

@@ -1,18 +1,21 @@
 #pragma once
 
+#include "../GameState.h"
+
 #include "../Renderer/Screens.h"
 
 #include "../Utils/KeySystem.h"
 #include "../Utils/vec2.h"
+
+#include "../settings.h"
 
 #include "Player.h"
 
 namespace Luntik::GameObjects {
     class ClientPlayerController {
     public:
-        ClientPlayerController(Renderer::Screens::MainGameScreen* screen, Player* player) {
+        ClientPlayerController(Player* player) {
             m_PlayerToControl = player;
-            m_GameScreen = screen;
         }
 
         ~ClientPlayerController() {
@@ -36,17 +39,16 @@ namespace Luntik::GameObjects {
             }
             
             if (m_PlayerToControl->getAcc() != 0) {
-                m_GameScreen->playerSprite->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::RUN);
+                s_MainGameScreen->playerSprite->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::RUN);
             } else {
-                m_GameScreen->playerSprite->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::IDLE);
+                s_MainGameScreen->playerSprite->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::IDLE);
             }
 
-            m_GameScreen->playerSprite->getImage()->getTransform().setPos(m_PlayerToControl->getPos());
-            m_GameScreen->setCameraPos(m_PlayerToControl->getPos());
+            s_MainGameScreen->playerSprite->getImage()->getTransform().setPos(m_PlayerToControl->getPos());
+            s_MainGameScreen->setCameraPos(m_PlayerToControl->getPos());
         }
 
     private:
         Player* m_PlayerToControl;
-        Renderer::Screens::MainGameScreen* m_GameScreen;
     };
 }

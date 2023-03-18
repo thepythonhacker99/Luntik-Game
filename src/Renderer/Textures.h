@@ -41,4 +41,19 @@ namespace Luntik::Renderer::Textures {
         s_PlayerTexture_run_3 = s_TextureMap->getTexture(2, 1);
         s_PlayerTexture_run_4 = s_TextureMap->getTexture(3, 1);
     }
+
+    static void unloadTextures() {
+        delete s_TextureMap;
+        delete s_BlockTexture;
+
+        delete s_PlayerTexture_idle_1;
+        delete s_PlayerTexture_idle_2;
+        delete s_PlayerTexture_idle_3;
+        delete s_PlayerTexture_idle_4;
+
+        delete s_PlayerTexture_run_1;
+        delete s_PlayerTexture_run_2;
+        delete s_PlayerTexture_run_3;
+        delete s_PlayerTexture_run_4;
+    }
 }

@@ -92,7 +92,6 @@ namespace Luntik::Network {
                     clientInfo.clientThread.join();
                     LOGGER.log("Client " + std::to_string(id) + " has finished");
                 }
-                delete clientInfo.socket;
             }
             /////
 
@@ -230,6 +229,8 @@ namespace Luntik::Network {
             std::lock_guard<std::mutex> lock(this->m_CallbackDisconnectedClientsQueueMutex);
             m_DisconnectedClientsQueue.push(client->id);
             LOGGER.log("Added client " + std::to_string(client->id) + " to disconnect queue");
+
+            delete client->socket;
         }
 
         void startListen() {

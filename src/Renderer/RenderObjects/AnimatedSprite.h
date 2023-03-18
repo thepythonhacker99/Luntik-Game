@@ -33,13 +33,13 @@ namespace Luntik::Renderer::RenderObjects {
             }
         }
 
-        void render(Window* window, float deltaTime) override {
+        void render(float deltaTime) override {
             if (m_Textures.empty()) return;
 
             update(deltaTime);
             getImage()->setTexture(m_Textures.at(m_AnimationKey).frames.at(frame));
 
-            if (getImage()) window->getSFMLWindow()->draw(getImage()->asSFMLSprite());
+            if (getImage()) s_Renderer->getWindow()->getSFMLWindow()->draw(getImage()->asSFMLSprite());
         }
 
         int getAnimationKey() {

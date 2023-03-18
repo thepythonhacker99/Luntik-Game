@@ -50,14 +50,14 @@ namespace Luntik::Renderer::Screens {
             );
         }
 
-        void render(Window* window, float deltaTime) override {
-            blockSprite->render(window, deltaTime);
+        void render(float deltaTime) override {
+            blockSprite->render(deltaTime);
 
             for (auto& [id, sprite] : otherPlayers) {
-                sprite->render(window, deltaTime);
+                sprite->render(deltaTime);
             }
 
-            playerSprite->render(window, deltaTime);
+            playerSprite->render(deltaTime);
         }
 
         void addOtherPlayer(uint32_t id) {
@@ -129,10 +129,10 @@ namespace Luntik::Renderer::Screens {
             );
         }
 
-        void render(Window* window, float deltaTime) {
-            title->render(window, deltaTime);
-            joinButton->render(window, deltaTime);
-            hostButton->render(window, deltaTime);
+        void render(float deltaTime) override {
+            title->render(deltaTime);
+            joinButton->render(deltaTime);
+            hostButton->render(deltaTime);
         }
 
         std::unique_ptr<RenderObjects::Text> title;
@@ -178,9 +178,9 @@ namespace Luntik::Renderer::Screens {
             );
         }
 
-        void render(Window* window, float deltaTime) {
-            disconnectedText->render(window, deltaTime);
-            backButton->render(window, deltaTime);
+        void render(float deltaTime) override {
+            disconnectedText->render(deltaTime);
+            backButton->render(deltaTime);
         }
 
         std::unique_ptr<RenderObjects::Text> disconnectedText;

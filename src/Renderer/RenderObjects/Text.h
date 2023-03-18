@@ -4,6 +4,9 @@
 
 #include "../Window.h"
 #include "../RenderedObject.h"
+
+#include "../../GameState.h"
+
 #include "../../Utils/Transform.h"
 
 #include "ADDONS/modules/BitmapFont/BitmapFont.hpp"
@@ -54,9 +57,9 @@ namespace Luntik::Renderer::RenderObjects {
             this->m_Transform.setSize(Utils::vec2(m_RenderText.getSize()));
         }
 
-        void render(Window* window, float deltaTime) override {
+        void render(float deltaTime) override {
             m_RenderText.setPosition(m_Transform.getPosWithAlignment());
-            window->getSFMLWindow()->draw(m_RenderText);
+            s_Renderer->getWindow()->getSFMLWindow()->draw(m_RenderText);
         }
 
         BitmapText* getDrawingText() { return &m_RenderText; }

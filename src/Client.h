@@ -36,7 +36,7 @@ namespace Luntik {
     class Client {
     public:
         Client(Renderer::Screens::MainGameScreen* gameScreen, short port, sf::IpAddress address) :
-            m_Port(port), m_Address(address), m_GameScreen(gameScreen), m_Player(), m_ClientPlayerController(m_GameScreen, &m_Player), m_Client(m_Address, m_Port)
+            m_Port(port), m_Address(address), m_GameScreen(gameScreen), m_Player(), m_ClientPlayerController(&m_Player), m_Client(m_Address, m_Port)
         {
             m_Client.setOnDisconnectedFromServerCallback(std::bind(&Client::handleDisconnectedFromServer, this));
 

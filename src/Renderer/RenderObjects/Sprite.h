@@ -5,6 +5,8 @@
 
 #include "../../Utils/Image.h"
 
+#include "../../GameState.h"
+
 namespace Luntik::Renderer::RenderObjects {
     class Sprite : public RenderedObject {
     public:
@@ -20,9 +22,9 @@ namespace Luntik::Renderer::RenderObjects {
             delete m_Image;
         }
 
-        void render(Window* window, float deltaTime) override {
+        void render(float deltaTime) override {
             if (m_Image);
-                window->getSFMLWindow()->draw(m_Image->asSFMLSprite());
+                s_Renderer->getWindow()->getSFMLWindow()->draw(m_Image->asSFMLSprite());
         }
 
         Utils::Image* getImage() { return m_Image; }

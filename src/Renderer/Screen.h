@@ -26,7 +26,7 @@ namespace Luntik::Renderer {
 
         }
 
-        virtual void render(Window* window, float deltaTime) {}
+        virtual void render(float deltaTime) {}
 
         void setCameraPos(Utils::vec2 pos) {
             this->m_CameraPos = pos;

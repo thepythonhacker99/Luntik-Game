@@ -16,6 +16,7 @@
 #include "GameObjects/ClientPlayerController.h"
 #include "GameObjects/Player.h"
 
+#include "GameState.h"
 #include "Client.h"
 #include "Server.h"
 
@@ -39,20 +40,21 @@ namespace Luntik {
             Renderer::Animations::loadAnimations();
             Renderer::Fonts::loadFonts();
 
-            m_Renderer = std::make_unique<Renderer::Renderer>();
-            m_Renderer->getWindow()->getSFMLWindow()->setVerticalSyncEnabled(true);
+            s_Renderer = new Renderer::Renderer();
+            s_Renderer->getWindow()->getSFMLWindow()->setVerticalSyncEnabled(true);
             
-            Utils::KeySystem::initializeKeySystem(m_Renderer->getWindow());
+            Utils::KeySystem::initializeKeySystem();
 
-            m_ScreenMainGame = std::make_unique<Renderer::Screens::MainGameScreen>();
-            m_ScreenIntro = std::make_unique<Renderer::Screens::IntroScreen>();
-            m_ScreenDisconnected = std::make_unique<Renderer::Screens::DisconnectedScreen>();
+            s_MainGameScreen = new Renderer::Screens::MainGameScreen();
+            s_IntroScreen = new Renderer::Screens::IntroScreen();
+            s_DisconnectedScreen = new Renderer::Screens::DisconnectedScreen();
 
-            m_Renderer->setScreen(m_ScreenIntro.get());
+            s_Renderer->setScreen(s_IntroScreen);
         }
 
         ~Game() {
-            
+            Renderer::Textures::unloadTextures();
+            Renderer::Fonts::unloadFonts();
         }
 
         int run() {
@@ -68,19 +70,18 @@ namespace Luntik {
                 frames++;
 
                 if (time > 1) {
-                    LOGGER.log("FPS: " + std::to_string(frames));
                     time = 0;
                     frames = 0;
                 }
 
                 Utils::KeySystem::s_KeySystem->update();
 
-                switch (m_Renderer->getScreen()->ID) {
+                switch (s_Renderer->getScreen()->ID) {
                     case Renderer::Screens::MAIN_GAME_SCREEN:
-                        if (m_Client.get()) {
-                            if (m_Client->getConnectionStatus() != CONNECTED) {
+                        if (s_Client) {
+                            if (s_Client->getConnectionStatus() != CONNECTED) {
                                 std::string disconnectMessage = "";
-                                switch (m_Client->getConnectionStatus()) {
+                                switch (s_Client->getConnectionStatus()) {
                                     case DISCONNECTED:
                                         disconnectMessage = "Disconnected";
                                         break;
@@ -93,35 +94,37 @@ namespace Luntik {
                                         disconnectMessage = "Something went wrong";
                                         break;
                                 }
-                                m_ScreenDisconnected->disconnectedText->setText(disconnectMessage);
-                                m_Renderer->setScreen(m_ScreenDisconnected.get());
+                                s_DisconnectedScreen->disconnectedText->setText(disconnectMessage);
+                                s_Renderer->setScreen(s_DisconnectedScreen);
 
-                                m_ScreenMainGame.reset(new Renderer::Screens::MainGameScreen());
-                                m_Client.reset();
+                                delete s_MainGameScreen;
+                                s_MainGameScreen = new Renderer::Screens::MainGameScreen();
+
+                                delete s_Client;
                                 {
                                     std::lock_guard<std::mutex> lock(m_RunServerMutex);
                                     m_RunServer = false;
                                 }
                             }
-                            else m_Client->tick(deltaTime);
+                            else s_Client->tick(deltaTime);
                         }
                         break;
 
                     case Renderer::Screens::INTRO_SCREEN:
-                        if (m_ScreenIntro->joinButton->isPressed(m_Renderer->getWindow())) {
+                        if (s_IntroScreen->joinButton->isPressed()) {
                             initClient();
-                            m_Renderer->setScreen(m_ScreenMainGame.get());
-                        } else if (m_ScreenIntro->hostButton->isPressed(m_Renderer->getWindow())) {
+                            s_Renderer->setScreen(s_MainGameScreen);
+                        } else if (s_IntroScreen->hostButton->isPressed()) {
                             runServer();
                             initClient();                            
 
-                            m_Renderer->setScreen(m_ScreenMainGame.get());
+                            s_Renderer->setScreen(s_MainGameScreen);
                         }
                         break;
 
                     case Renderer::Screens::DISCONNECTED_SCREEN:
-                        if (m_ScreenDisconnected->backButton->isPressed(m_Renderer->getWindow())) {
-                            m_Renderer->setScreen(m_ScreenIntro.get());
+                        if (s_DisconnectedScreen->backButton->isPressed()) {
+                            s_Renderer->setScreen(s_IntroScreen);
                         }
                         break;
 
@@ -132,12 +135,15 @@ namespace Luntik {
                 }
 
                 if (run) {
-                    if (m_Renderer->render(deltaTime)) {
+                    if (s_Renderer->render(deltaTime)) {
                         run = false;
                     }
                 }
             }
-            m_Client->stop();
+
+            if (s_Client) {
+                s_Client->stop();
+            }
 
             {
                 std::lock_guard<std::mutex> lock(m_RunServerMutex);
@@ -156,8 +162,8 @@ namespace Luntik {
 
     private:
         void initClient() {
-            if (m_Client.get() == nullptr) {
-                m_Client = std::make_unique<Client>(m_ScreenMainGame.get(), 13553, m_Ip);
+            if (s_Client == nullptr) {
+                s_Client = new Client(s_MainGameScreen, 13553, m_Ip);
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");
@@ -215,13 +221,5 @@ namespace Luntik {
 
         bool m_RunServer = false;
         std::mutex m_RunServerMutex;
-
-        std::unique_ptr<Renderer::Screens::MainGameScreen> m_ScreenMainGame;
-        std::unique_ptr<Renderer::Screens::IntroScreen> m_ScreenIntro;
-        std::unique_ptr<Renderer::Screens::DisconnectedScreen> m_ScreenDisconnected;
-
-        std::unique_ptr<Client> m_Client;
-
-        std::unique_ptr<Luntik::Renderer::Renderer> m_Renderer;
     };
 }
