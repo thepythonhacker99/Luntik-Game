@@ -21,8 +21,10 @@ namespace Luntik {
             m_SocketSever.onClientDisconnected(std::bind(&Server::handleDisconnection, this, std::placeholders::_1));
 
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_POSITION_PACKET, std::bind(&Server::handleC2SPositionPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        }
 
-            m_SocketSever.start();
+        ~Server() {
+            
         }
 
         void tick(float deltaTime) {
@@ -30,11 +32,61 @@ namespace Luntik {
             sendPositionToClients();
         }
 
+        void start() {
+            m_SocketSever.start();
+        }
+
+        void runAsynchronously() {
+            {
+                std::lock_guard lock(m_RunServerMutex);
+                if (m_RunServer) {
+                    LOGGER.log("Tried to run start server asynchronously, but the server is already running");
+                    return;
+                }
+                m_RunServer = true;
+            }
+
+            m_ServerThread = std::thread(std::bind(&Server::serverThread, this));
+            LOGGER.log("Server started");
+        }
+
         void stop() {
+            {
+                std::lock_guard<std::mutex> lock(m_RunServerMutex);
+                m_RunServer = false;
+            }
+            if (m_ServerThread.joinable()) {
+                LOGGER.log("Waiting for server thread");
+                m_ServerThread.join();
+            }
+
             m_SocketSever.stop();
         }
 
     private:
+        void serverThread() {
+            Utils::frame_rater<Settings::SEND_POS_RATE> fps;
+
+            bool stopServer = false;
+
+            while (true) {
+                {
+                    std::lock_guard<std::mutex> lock(m_RunServerMutex);
+                    if (!m_RunServer) {
+                        stopServer = true;
+                    }
+                }
+                
+                if (stopServer) {
+                    break;
+                }
+
+                // server stuff
+                tick(1/Settings::SEND_POS_RATE);
+                fps.sleep();
+            }
+        }
+
         void sendPositionToClients() {
             for (auto& [id, socket] : m_SocketSever.getClients()) {
                 if (m_Players.find(id) == m_Players.end()) continue;
@@ -92,5 +144,9 @@ namespace Luntik {
         sf::IpAddress m_Address;
 
         Network::SocketServer m_SocketSever;
+
+        std::thread m_ServerThread;
+        std::mutex m_RunServerMutex;
+        bool m_RunServer = false;
     };
 }

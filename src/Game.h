@@ -40,21 +40,22 @@ namespace Luntik {
             Renderer::Animations::loadAnimations();
             Renderer::Fonts::loadFonts();
 
-            s_Renderer = new Renderer::Renderer();
+            s_Renderer = std::make_unique<Renderer::Renderer>();
             s_Renderer->getWindow()->getSFMLWindow()->setVerticalSyncEnabled(true);
             
             Utils::KeySystem::initializeKeySystem();
 
-            s_MainGameScreen = new Renderer::Screens::MainGameScreen();
-            s_IntroScreen = new Renderer::Screens::IntroScreen();
-            s_DisconnectedScreen = new Renderer::Screens::DisconnectedScreen();
+            s_MainGameScreen = std::make_unique<Renderer::Screens::MainGameScreen>();
+            s_IntroScreen = std::make_unique<Renderer::Screens::IntroScreen>();
+            s_DisconnectedScreen = std::make_unique<Renderer::Screens::DisconnectedScreen>();
 
-            s_Renderer->setScreen(s_IntroScreen);
+            s_Renderer->setScreen(s_IntroScreen.get());
         }
 
         ~Game() {
             Renderer::Textures::unloadTextures();
             Renderer::Fonts::unloadFonts();
+            GameState::uninitGameState();
         }
 
         int run() {
@@ -95,16 +96,12 @@ namespace Luntik {
                                         break;
                                 }
                                 s_DisconnectedScreen->disconnectedText->setText(disconnectMessage);
-                                s_Renderer->setScreen(s_DisconnectedScreen);
+                                s_Renderer->setScreen(s_DisconnectedScreen.get());
 
-                                delete s_MainGameScreen;
-                                s_MainGameScreen = new Renderer::Screens::MainGameScreen();
+                                s_MainGameScreen.reset(new Renderer::Screens::MainGameScreen());
 
-                                delete s_Client;
-                                {
-                                    std::lock_guard<std::mutex> lock(m_RunServerMutex);
-                                    m_RunServer = false;
-                                }
+                                deleteClient();
+                                deleteServer();
                             }
                             else s_Client->tick(deltaTime);
                         }
@@ -113,18 +110,42 @@ namespace Luntik {
                     case Renderer::Screens::INTRO_SCREEN:
                         if (s_IntroScreen->joinButton->isPressed()) {
                             initClient();
-                            s_Renderer->setScreen(s_MainGameScreen);
+                            s_Renderer->setScreen(s_MainGameScreen.get());
                         } else if (s_IntroScreen->hostButton->isPressed()) {
-                            runServer();
-                            initClient();                            
+                            initServer();
+                            s_Server->start();
+                            s_Server->runAsynchronously();
 
-                            s_Renderer->setScreen(s_MainGameScreen);
+                            initClient();
+                            if (s_Client->getConnectionStatus() == CONNECTED) {
+                                s_Renderer->setScreen(s_MainGameScreen.get());
+                            } else {
+                                std::string disconnectMessage = "";
+                                switch (s_Client->getConnectionStatus()) {
+                                    case DISCONNECTED:
+                                        disconnectMessage = "Disconnected";
+                                        break;
+
+                                    case FAILED_TO_CONNECT:
+                                        disconnectMessage = "Couldn't connect";
+                                        break;
+
+                                    default:
+                                        disconnectMessage = "Something went wrong";
+                                        break;
+                                }
+                                deleteClient();
+                                deleteServer();
+
+                                s_DisconnectedScreen->disconnectedText->setText(disconnectMessage);
+                                s_Renderer->setScreen(s_DisconnectedScreen.get());
+                            }
                         }
                         break;
 
                     case Renderer::Screens::DISCONNECTED_SCREEN:
                         if (s_DisconnectedScreen->backButton->isPressed()) {
-                            s_Renderer->setScreen(s_IntroScreen);
+                            s_Renderer->setScreen(s_IntroScreen.get());
                         }
                         break;
 
@@ -141,74 +162,45 @@ namespace Luntik {
                 }
             }
 
-            if (s_Client) {
-                s_Client->stop();
-            }
-
-            {
-                std::lock_guard<std::mutex> lock(m_RunServerMutex);
-                m_RunServer = false;
-            }
-
-            if (m_ServerThread.joinable()) {
-                LOGGER.log("Stopping server");
-                m_ServerThread.join();
-                LOGGER.log("Server stopped");
-            }
-
+            deleteClient();
+            deleteServer();
 
             return returnCode;
         }
 
     private:
         void initClient() {
-            if (s_Client == nullptr) {
-                s_Client = new Client(s_MainGameScreen, 13553, m_Ip);
+            if (!s_Client) {
+                s_Client.reset(new Client(13353, m_Ip));
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");
             }
         }
 
-        void runServer() {
-            {
-                std::lock_guard<std::mutex> lock(m_RunServerMutex);
-                if (m_RunServer) {
-                    LOGGER.log("Server is already running");
-                    return;
-                }
+        void deleteClient() {
+            if (s_Client) {
+                s_Client->stop();
+                s_Client.reset();
+                LOGGER.log("Client deleted");
             }
+        }
 
-            m_RunServer = true;
-            m_ServerThread = std::thread(
-                [](bool* runServer, std::mutex* runServerMutex) {
-                    std::unique_ptr<Server> server = std::make_unique<Server>(13553, sf::IpAddress::getLocalAddress());
-                    Utils::frame_rater<Settings::SEND_POS_RATE> fps;
+        void initServer() {
+            if (!s_Server) {
+                s_Server.reset(new Server(13353, sf::IpAddress::getLocalAddress()));
+                LOGGER.log("Server created");
+            } else {
+                LOGGER.log("Server already created");
+            }
+        }
 
-                    bool stopServer = false;
-
-                    while (true) {
-                        {
-                            std::lock_guard<std::mutex> lock(*runServerMutex);
-                            if (!*runServer) {
-                                stopServer = true;
-                            }
-                        }
-                        
-                        if (stopServer) {
-                            server->stop();
-                            break;
-                        }
-
-                        // server stuff
-                        server->tick(1/Settings::SEND_POS_RATE);
-                        fps.sleep();
-                    }
-                },
-                &m_RunServer,
-                &m_RunServerMutex
-            );
-            LOGGER.log("Server started");
+        void deleteServer() {
+            if (s_Server) {
+                s_Server->stop();
+                s_Server.reset();
+                LOGGER.log("Server deleted");
+            }
         }
 
         Utils::Logger LOGGER{"Luntik"};
@@ -216,10 +208,5 @@ namespace Luntik {
         sf::IpAddress m_Ip;
 
         sf::Clock timer;
-
-        std::thread m_ServerThread;
-
-        bool m_RunServer = false;
-        std::mutex m_RunServerMutex;
     };
 }

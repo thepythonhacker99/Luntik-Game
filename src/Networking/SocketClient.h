@@ -24,7 +24,7 @@ namespace Luntik::Network {
         }
 
         ~SocketClient() {
-
+            
         }
 
         void setOnDisconnectedFromServerCallback(CallbackOnDisconnected callback) { m_CallbackOnDisconnectedFromServer = callback; }
@@ -33,7 +33,7 @@ namespace Luntik::Network {
         void start() {
             if (m_Socket.connect(m_Address, m_Port, sf::seconds(3.f)) == sf::Socket::Done) {
                 LOGGER.log("Connected to server: " + m_Address.toString() + " " + std::to_string(m_Port));
-
+                m_Running = true;
                 m_Listen = true;
                 m_ListenThread = std::thread(std::bind(&SocketClient::listenThread, this));
             } else {
@@ -53,6 +53,9 @@ namespace Luntik::Network {
         }
 
         void stop() {
+            if (!m_Running) return;
+            m_Running = false;
+
             LOGGER.log("Stopping socket client");
             // MAKE ALL THE THREADS STOP
             {
@@ -154,6 +157,9 @@ namespace Luntik::Network {
         short m_Port;
         sf::IpAddress m_Address;
 
+        // VARS
+        bool m_Running = false;
+
         // CALLBACKS
         std::mutex m_ReceivedPacketsQueueMutex;
         std::queue<sf::Packet> m_ReceivedPacketsQueue;
@@ -162,6 +168,7 @@ namespace Luntik::Network {
         std::mutex m_DisconnectedFromServerMutex;
         bool m_DisconnectedFromServer = false;
         CallbackOnDisconnected m_CallbackOnDisconnectedFromServer = {};
+
         // LISTENER
         sf::TcpSocket m_Socket;
 

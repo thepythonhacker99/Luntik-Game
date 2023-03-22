@@ -39,11 +39,11 @@ namespace Luntik::Network {
         };
         
         SocketServer(sf::IpAddress addr, short port) : m_Port(port), m_Address(addr) {
-            
+
         }
 
         ~SocketServer() {
-
+            
         }
 
         void onClientConnected(CallbackOnClientConnected callback) { m_CallbackOnClientConnected = callback; }
@@ -53,6 +53,7 @@ namespace Luntik::Network {
 
         void start() {
             startListen();
+            m_Running = true;
         }
 
         void tick() {
@@ -62,6 +63,9 @@ namespace Luntik::Network {
         }
 
         void stop() {
+            if (!m_Running) return;
+            m_Running = false;
+
             LOGGER.log("Shutting down SocketServer");
             // MAKE ALL THE THREADS STOP
             {
@@ -103,6 +107,8 @@ namespace Luntik::Network {
 
             LOGGER.log("Successfully shut down SocketServer");
         }
+
+        bool isRunning() { return m_Running; }
 
         void broadcastPacketWithout(const sf::Packet& packet, ID withoutId=-1) {
             for (auto& [id, clientInfo] : m_Clients) {
@@ -283,6 +289,8 @@ namespace Luntik::Network {
         sf::IpAddress m_Address;
 
         // VARIABLES
+        bool m_Running = false;
+
         ID m_CurrentClientId = 0;
         std::unordered_map<ID, ClientInfo> m_Clients;
 

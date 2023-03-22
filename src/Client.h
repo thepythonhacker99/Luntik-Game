@@ -27,16 +27,17 @@ namespace Luntik {
     struct OtherPlayer {
         GameObjects::Player player;
         GameObjects::NetworkPlayerController controller;
+        uint32_t id;
 
-        OtherPlayer(Utils::vec2 initialPos) : controller(nullptr) {
+        OtherPlayer(Utils::vec2 initialPos, uint32_t id) : id(id), controller(nullptr, id) {
             player.setPos(initialPos);
         }
     };
 
     class Client {
     public:
-        Client(Renderer::Screens::MainGameScreen* gameScreen, short port, sf::IpAddress address) :
-            m_Port(port), m_Address(address), m_GameScreen(gameScreen), m_Player(), m_ClientPlayerController(&m_Player), m_Client(m_Address, m_Port)
+        Client(short port, sf::IpAddress address) :
+            m_Port(port), m_Address(address), m_Player(), m_ClientPlayerController(&m_Player), m_Client(m_Address, m_Port)
         {
             m_Client.setOnDisconnectedFromServerCallback(std::bind(&Client::handleDisconnectedFromServer, this));
 
@@ -54,7 +55,7 @@ namespace Luntik {
         }
 
         ~Client() {
-            stop();
+            
         }
 
         void tick(float deltaTime) {
@@ -67,7 +68,7 @@ namespace Luntik {
                 otherPlayer.controller.tick(deltaTime);
             }
 
-            for (auto& [id, sprite] : m_GameScreen->otherPlayers) {
+            for (auto& [id, sprite] : s_MainGameScreen->otherPlayers) {
                 if (m_OtherPlayers.find(id) == m_OtherPlayers.end()) continue;
                 sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).player.getPos());
             }
@@ -79,8 +80,10 @@ namespace Luntik {
         }
 
         void stop() {
+            LOGGER.log("Stopping client");
             m_Client.stop();
             m_ConnectionStatus = NOT_CONNECTED;
+            LOGGER.log("Client stopped");
         }
 
         ConnectionStatus getConnectionStatus() { return m_ConnectionStatus; }
@@ -104,12 +107,12 @@ namespace Luntik {
                     return;
                 }
 
-                m_OtherPlayers.emplace(packetInfo.id, OtherPlayer(packetInfo.pos));
+                m_OtherPlayers.emplace(packetInfo.id, OtherPlayer(packetInfo.pos, packetInfo.id));
                 m_OtherPlayers.at(packetInfo.id).controller.setPlayer(&m_OtherPlayers.at(packetInfo.id).player);
                 m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
                 // m_OtherPlayers.at(packetInfo.id).setName(packetInfo.name);
 
-                m_GameScreen->addOtherPlayer(packetInfo.id);
+                s_MainGameScreen->addOtherPlayer(packetInfo.id);
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a new player: ") + e.what());
             }
@@ -127,7 +130,7 @@ namespace Luntik {
                 }
 
                 m_OtherPlayers.erase(packetInfo.id);
-                m_GameScreen->removeOtherPlayer(packetInfo.id);
+                s_MainGameScreen->removeOtherPlayer(packetInfo.id);
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while player disconnection: ") + e.what());
             }
@@ -149,8 +152,6 @@ namespace Luntik {
         }
 
         Utils::Logger LOGGER{"Luntik::Client"};
-
-        Renderer::Screens::MainGameScreen* m_GameScreen;
 
         std::unordered_map<Network::ID, OtherPlayer> m_OtherPlayers;
 

@@ -16,11 +16,23 @@ namespace Luntik::Renderer::Screens {
 }
 
 namespace Luntik {
-    static Renderer::Renderer* s_Renderer;
-    static Client* s_Client;
-    static Server* s_Server;
+    static std::unique_ptr<Renderer::Renderer> s_Renderer;
+    static std::unique_ptr<Client> s_Client;
+    static std::unique_ptr<Server> s_Server;
 
-    static Renderer::Screens::MainGameScreen* s_MainGameScreen;
-    static Renderer::Screens::IntroScreen* s_IntroScreen;
-    static Renderer::Screens::DisconnectedScreen* s_DisconnectedScreen;
+    static std::unique_ptr<Renderer::Screens::MainGameScreen> s_MainGameScreen;
+    static std::unique_ptr<Renderer::Screens::IntroScreen> s_IntroScreen;
+    static std::unique_ptr<Renderer::Screens::DisconnectedScreen> s_DisconnectedScreen;
+}
+
+namespace Luntik::GameState {
+    static void uninitGameState() {
+        s_Renderer.reset();
+        s_Client.reset();
+        s_Server.reset();
+
+        s_MainGameScreen.reset();
+        s_IntroScreen.reset();
+        s_DisconnectedScreen.reset();
+    }
 }
