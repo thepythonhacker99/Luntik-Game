@@ -156,10 +156,7 @@ namespace Luntik::Network {
             while (!m_DisconnectedClientsQueue.empty()) {
                 ID id = m_DisconnectedClientsQueue.front();
                 LOGGER.log("Removing client: " + std::to_string(id));
-
-                m_Clients.at(id).socket->disconnect();
-                delete m_Clients.at(id).socket;
-
+                
                 m_Clients.at(id).clientThread.join();
                 m_Clients.erase(id);
 

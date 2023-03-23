@@ -66,18 +66,25 @@ namespace Luntik::Network::Packets {
     // C2S_POSITION_PACKET
     struct C2S_PositionPacketInfo {
         Utils::vec2 pos;
+
+        // -1 - LEFT
+        //  1 - RIGHT
+        //  0 - NOT MOVING
+        int moveDir;
     };
 
     sf::Packet createC2SPositionPacket(const C2S_PositionPacketInfo& info) {
         sf::Packet packet;
         packet << C2S_POSITION_PACKET;
         packet << info.pos;
+        packet << info.moveDir;
         return packet;
     }
 
     C2S_PositionPacketInfo readC2SPositionPacket(sf::Packet& packet) {
         C2S_PositionPacketInfo info;
         info.pos = read<Utils::vec2>(packet);
+        info.moveDir = read<int>(packet);
         return info;
     }
 
@@ -85,6 +92,11 @@ namespace Luntik::Network::Packets {
     struct S2C_PositionPacketInfo {
         ID id;
         Utils::vec2 pos;
+
+        // -1 - LEFT
+        //  1 - RIGHT
+        //  0 - NOT MOVING
+        int moveDir;
     };
 
     sf::Packet createS2CPositionPacket(const S2C_PositionPacketInfo& info) {
@@ -92,6 +104,7 @@ namespace Luntik::Network::Packets {
         packet << S2C_POSITION_PACKET;
         packet << info.id;
         packet << info.pos;
+        packet << info.moveDir;
         return packet;
     }
 
@@ -99,6 +112,7 @@ namespace Luntik::Network::Packets {
         S2C_PositionPacketInfo info;
         info.id = read<ID>(packet);
         info.pos = read<Utils::vec2>(packet);
+        info.moveDir = read<int>(packet);
         return info;
     }
 

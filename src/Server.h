@@ -90,7 +90,7 @@ namespace Luntik {
         void sendPositionToClients() {
             for (auto& [id, socket] : m_SocketSever.getClients()) {
                 if (m_Players.find(id) == m_Players.end()) continue;
-                sf::Packet packet = Network::Packets::createS2CPositionPacket({ id, m_Players.at(id).getPos() });
+                sf::Packet packet = Network::Packets::createS2CPositionPacket({ id, m_Players.at(id).getPos(), int(m_Players.at(id).getAcc().x) });
                 m_SocketSever.broadcastPacketWithout(packet, id);
             }
         }
@@ -122,9 +122,10 @@ namespace Luntik {
         
         void handleC2SPositionPacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
             try {
-                Utils::vec2 pos = Network::Packets::read<Utils::vec2>(packet);
+                Network::Packets::C2S_PositionPacketInfo packetInfo = Network::Packets::readC2SPositionPacket(packet);
                 if (m_Players.count(senderId) > 0) {
-                    m_Players.at(senderId).setPos(pos);
+                    m_Players.at(senderId).setPos(packetInfo.pos);
+                    m_Players.at(senderId).setAcc({ float(packetInfo.moveDir), 0 });
                 }
                 // LOGGER.log("got pos: " + (std::string)(pos));
             } catch (const std::runtime_error& e) {

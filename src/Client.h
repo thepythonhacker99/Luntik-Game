@@ -74,7 +74,7 @@ namespace Luntik {
             }
 
             if (m_SendPositionTimer.should_run_code(deltaTime)) {
-                sf::Packet posPacket = Network::Packets::createC2SPositionPacket({ m_Player.getPos() });
+                sf::Packet posPacket = Network::Packets::createC2SPositionPacket({ m_Player.getPos(), int(m_Player.getAcc().x) });
                 m_Client.getSocket()->send(posPacket);
             }
         }
@@ -146,6 +146,7 @@ namespace Luntik {
                 }
 
                 m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
+                m_OtherPlayers.at(packetInfo.id).player.setAcc({ float(packetInfo.moveDir), 0 });
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a new position packet: ") + e.what());
             }
