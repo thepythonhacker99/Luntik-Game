@@ -6,7 +6,7 @@
 
 #include "GameObjects/ClientPlayerController.h"
 #include "GameObjects/NetworkPlayerController.h"
-#include "GameObjects/Player.h"
+#include "GameObjects/PlayerInfo.h"
 
 #include "Renderer/Screens.h"
 
@@ -25,19 +25,19 @@ namespace Luntik {
     };
 
     struct OtherPlayer {
-        GameObjects::Player player;
+        GameObjects::PlayerInfo playerInfo;
         GameObjects::NetworkPlayerController controller;
         uint32_t id;
 
         OtherPlayer(Utils::vec2 initialPos, uint32_t id) : id(id), controller(nullptr, id) {
-            player.setPos(initialPos);
+            playerInfo.pos = initialPos;
         }
     };
 
     class Client {
     public:
         Client(short port, sf::IpAddress address) :
-            m_Port(port), m_Address(address), m_Player(), m_ClientPlayerController(&m_Player), m_Client(m_Address, m_Port)
+            m_Port(port), m_Address(address), m_PlayerInfo(), m_ClientPlayerController(&m_PlayerInfo), m_Client(m_Address, m_Port)
         {
             m_Client.setOnDisconnectedFromServerCallback(std::bind(&Client::handleDisconnectedFromServer, this));
 
@@ -61,7 +61,6 @@ namespace Luntik {
         void tick(float deltaTime) {
             m_Client.tick();
 
-            m_Player.tick(deltaTime);
             m_ClientPlayerController.tick(deltaTime);
 
             for (auto& [id, otherPlayer] : m_OtherPlayers) {
@@ -70,11 +69,11 @@ namespace Luntik {
 
             for (auto& [id, sprite] : s_MainGameScreen->otherPlayers) {
                 if (m_OtherPlayers.find(id) == m_OtherPlayers.end()) continue;
-                sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).player.getPos());
+                sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).playerInfo.pos);
             }
 
             if (m_SendPositionTimer.should_run_code(deltaTime)) {
-                sf::Packet posPacket = Network::Packets::createC2SPositionPacket({ m_Player.getPos(), int(m_Player.getAcc().x) });
+                sf::Packet posPacket = Network::Packets::createC2SPositionPacket({ m_PlayerInfo.pos, m_PlayerInfo.acc });
                 m_Client.getSocket()->send(posPacket);
             }
         }
@@ -108,7 +107,7 @@ namespace Luntik {
                 }
 
                 m_OtherPlayers.emplace(packetInfo.id, OtherPlayer(packetInfo.pos, packetInfo.id));
-                m_OtherPlayers.at(packetInfo.id).controller.setPlayer(&m_OtherPlayers.at(packetInfo.id).player);
+                m_OtherPlayers.at(packetInfo.id).controller.setPlayer(&m_OtherPlayers.at(packetInfo.id).playerInfo, packetInfo.id);
                 m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
                 // m_OtherPlayers.at(packetInfo.id).setName(packetInfo.name);
 
@@ -146,7 +145,7 @@ namespace Luntik {
                 }
 
                 m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
-                m_OtherPlayers.at(packetInfo.id).player.setAcc({ float(packetInfo.moveDir), 0 });
+                m_OtherPlayers.at(packetInfo.id).playerInfo.acc = packetInfo.acc;
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a new position packet: ") + e.what());
             }
@@ -156,7 +155,7 @@ namespace Luntik {
 
         std::unordered_map<Network::ID, OtherPlayer> m_OtherPlayers;
 
-        GameObjects::Player m_Player;
+        GameObjects::PlayerInfo m_PlayerInfo;
         GameObjects::ClientPlayerController m_ClientPlayerController;
 
         Utils::no_sleep_timer<20> m_SendPositionTimer;

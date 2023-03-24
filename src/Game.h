@@ -14,7 +14,7 @@
 #include "Renderer/Fonts.h"
 
 #include "GameObjects/ClientPlayerController.h"
-#include "GameObjects/Player.h"
+#include "GameObjects/PlayerInfo.h"
 
 #include "GameState.h"
 #include "Client.h"

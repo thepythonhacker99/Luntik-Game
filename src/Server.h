@@ -9,7 +9,7 @@
 #include "Networking/Packets.h"
 #include "Networking/SocketServer.h"
 
-#include "GameObjects/Player.h"
+#include "GameObjects/PlayerInfo.h"
 
 namespace Luntik {
     class Server {
@@ -90,7 +90,7 @@ namespace Luntik {
         void sendPositionToClients() {
             for (auto& [id, socket] : m_SocketSever.getClients()) {
                 if (m_Players.find(id) == m_Players.end()) continue;
-                sf::Packet packet = Network::Packets::createS2CPositionPacket({ id, m_Players.at(id).getPos(), int(m_Players.at(id).getAcc().x) });
+                sf::Packet packet = Network::Packets::createS2CPositionPacket({ id, m_Players.at(id).pos, m_Players.at(id).acc });
                 m_SocketSever.broadcastPacketWithout(packet, id);
             }
         }
@@ -99,12 +99,12 @@ namespace Luntik {
             LOGGER.log("New connection established: " + senderSocket->getRemoteAddress().toString() + ":" + std::to_string(senderSocket->getRemotePort()));
             m_Players[senderId];
 
-            sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ senderId, "", m_Players[senderId].getPos() });
+            sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ senderId, "", m_Players.at(senderId).pos });
             m_SocketSever.broadcastPacketWithout(packet, senderId);
 
             for (auto& [clientId, clientInfo] : m_Players) {
                 if (clientId == senderId) continue;
-                sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ clientId, "", clientInfo.getPos() }); // TODO: replace "" with clientInfo.getName() after adding names
+                sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ clientId, "", clientInfo.pos }); // TODO: replace "" with clientInfo.getName() after adding names
                 senderSocket->send(packet);
             }
         }
@@ -124,8 +124,8 @@ namespace Luntik {
             try {
                 Network::Packets::C2S_PositionPacketInfo packetInfo = Network::Packets::readC2SPositionPacket(packet);
                 if (m_Players.count(senderId) > 0) {
-                    m_Players.at(senderId).setPos(packetInfo.pos);
-                    m_Players.at(senderId).setAcc({ float(packetInfo.moveDir), 0 });
+                    m_Players.at(senderId).pos = packetInfo.pos;
+                    m_Players.at(senderId).acc = packetInfo.acc;
                 }
                 // LOGGER.log("got pos: " + (std::string)(pos));
             } catch (const std::runtime_error& e) {
@@ -138,7 +138,7 @@ namespace Luntik {
         Utils::Logger LOGGER{"Luntik::Server"};
 
         // SERVER VARS
-        std::unordered_map<Network::ID, GameObjects::Player> m_Players;
+        std::unordered_map<Network::ID, GameObjects::PlayerInfo> m_Players;
         
         // NETWORKING
         short m_Port;
