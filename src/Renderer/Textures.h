@@ -2,6 +2,7 @@
 
 #include "../Utils/Image.h"
 #include "../Utils/TextureMap.h"
+#include "../settings.h"
 
 #include "SFML/Graphics.hpp"
 

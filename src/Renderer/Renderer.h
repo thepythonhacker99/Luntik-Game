@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Window.h"
-#include "RenderedObject.h"
 #include "Screen.h"
 
 #include <memory>

@@ -4,6 +4,7 @@
 #include "RenderObjects/AnimatedSprite.h"
 #include "RenderObjects/Text.h"
 #include "RenderObjects/Button.h"
+#include "RenderObjects/TextBox.h"
 
 #include "Screen.h"
 
@@ -127,17 +128,32 @@ namespace Luntik::Renderer::Screens {
                     }
                 )
             );
+
+            textBox = std::make_unique<RenderObjects::TextBox>(
+                Fonts::s_NormalFont,
+                Utils::Transform(
+                    Utils::vec2(0, -10),
+                    Utils::vec2(130, 25),
+                    Utils::Alignment::Alignment2D {
+                        Utils::Alignment::MIDDLE,
+                        Utils::Alignment::MIDDLE
+                    }
+                ),
+                10
+            );
         }
 
         void render(float deltaTime) override {
             title->render(deltaTime);
             joinButton->render(deltaTime);
             hostButton->render(deltaTime);
+            textBox->render(deltaTime);
         }
 
         std::unique_ptr<RenderObjects::Text> title;
         std::unique_ptr<RenderObjects::Button> joinButton;
         std::unique_ptr<RenderObjects::Button> hostButton;
+        std::unique_ptr<RenderObjects::TextBox> textBox;
     };
 
     class DisconnectedScreen : public Screen {

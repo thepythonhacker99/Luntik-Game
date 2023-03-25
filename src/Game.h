@@ -4,17 +4,9 @@
 #include <mutex>
 #include <thread>
 
-#include "Renderer/Renderer.h"
-
-#include "Renderer/Screen.h"
-#include "Renderer/Screens.h"
-
 #include "Renderer/Textures.h"
 #include "Renderer/Animations.h"
 #include "Renderer/Fonts.h"
-
-#include "GameObjects/ClientPlayerController.h"
-#include "GameObjects/PlayerInfo.h"
 
 #include "GameState.h"
 #include "Client.h"
@@ -23,6 +15,9 @@
 #include "Utils/KeySystem.h"
 #include "Utils/Logger.h"
 #include "Utils/FrameRate.h"
+
+#include "Renderer/Screens.h"
+#include "Renderer/Renderer.h"
 
 #include "SFML/Network.hpp"
 
@@ -108,10 +103,10 @@ namespace Luntik {
                         break;
 
                     case Renderer::Screens::INTRO_SCREEN:
-                        if (s_IntroScreen->joinButton->isPressed()) {
+                        if (s_IntroScreen->joinButton->isPressed(s_IntroScreen->joinButton->getTransform())) {
                             initClient();
                             s_Renderer->setScreen(s_MainGameScreen.get());
-                        } else if (s_IntroScreen->hostButton->isPressed()) {
+                        } else if (s_IntroScreen->hostButton->isPressed(s_IntroScreen->hostButton->getTransform())) {
                             initServer();
                             s_Server->start();
                             s_Server->runAsynchronously();
@@ -144,7 +139,7 @@ namespace Luntik {
                         break;
 
                     case Renderer::Screens::DISCONNECTED_SCREEN:
-                        if (s_DisconnectedScreen->backButton->isPressed()) {
+                        if (s_DisconnectedScreen->backButton->isPressed(s_DisconnectedScreen->backButton->getTransform())) {
                             s_Renderer->setScreen(s_IntroScreen.get());
                         }
                         break;

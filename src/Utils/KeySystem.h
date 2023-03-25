@@ -2,7 +2,8 @@
 
 #include "SFML/Window.hpp"
 
-#include "../Renderer/Window.h"
+#include "../Renderer/Renderer.h"
+#include "../GameState.h"
 
 #include <unordered_map>
 
