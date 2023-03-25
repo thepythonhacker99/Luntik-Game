@@ -39,6 +39,10 @@ namespace Luntik::Renderer::RenderObjects {
             
         }
 
+        bool pressed() {
+            return isPressed(m_Transform);
+        }
+
         void setPos(Utils::vec2 pos) {
             m_Transform.setPos(pos);
         }

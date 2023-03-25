@@ -59,17 +59,27 @@ namespace Luntik {
         }
 
         void tick(float deltaTime) {
-            m_Client.tick();
+            if (!m_Paused) {
+                if (Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::Key::Escape) == Utils::KeySystem::JUST_PRESSED) {
+                    s_Renderer->setScreen(s_PauseScreen.get());
+                    setPaused(true);
+                }
+                
+                m_ClientPlayerController.tick(deltaTime);
 
-            m_ClientPlayerController.tick(deltaTime);
+                for (auto& [id, sprite] : s_MainGameScreen->otherPlayers) {
+                    if (m_OtherPlayers.find(id) == m_OtherPlayers.end()) continue;
+                    sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).playerInfo.pos);
+                }
+            } else {
+                m_PlayerInfo.acc = { 0, 0 };
+                m_ClientPlayerController.setVel({ 0, 0 });
+            }
+
+            m_Client.tick();
 
             for (auto& [id, otherPlayer] : m_OtherPlayers) {
                 otherPlayer.controller.tick(deltaTime);
-            }
-
-            for (auto& [id, sprite] : s_MainGameScreen->otherPlayers) {
-                if (m_OtherPlayers.find(id) == m_OtherPlayers.end()) continue;
-                sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).playerInfo.pos);
             }
 
             if (m_SendPositionTimer.should_run_code(deltaTime)) {
@@ -86,6 +96,9 @@ namespace Luntik {
         }
 
         ConnectionStatus getConnectionStatus() { return m_ConnectionStatus; }
+
+        bool getPaused() const { return m_Paused; }
+        void setPaused(bool paused) { m_Paused = paused; }
 
     private:
         void handleDisconnectedFromServer() {
@@ -152,6 +165,8 @@ namespace Luntik {
         }
 
         Utils::Logger LOGGER{"Luntik::Client"};
+
+        bool m_Paused = false;
 
         std::unordered_map<Network::ID, OtherPlayer> m_OtherPlayers;
 

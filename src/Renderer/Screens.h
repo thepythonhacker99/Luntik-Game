@@ -202,4 +202,66 @@ namespace Luntik::Renderer::Screens {
         std::unique_ptr<RenderObjects::Text> disconnectedText;
         std::unique_ptr<RenderObjects::Button> backButton;
     };
+
+    class PauseScreen : public Screen {
+    public:
+        PauseScreen() {
+            ID = PAUSE_SCREEN;
+
+            setCameraPos(Utils::vec2{
+                0,
+                0
+            });
+
+            pauseText = std::make_unique<RenderObjects::Text>(
+                "Paused",
+                Utils::Transform(
+                    Utils::vec2{ 0, -40 },
+                    Utils::vec2{ 0, 0 },
+                    Utils::Alignment::Alignment2D {
+                        Utils::Alignment::MIDDLE,
+                        Utils::Alignment::MIDDLE
+                    }
+                ),
+                Fonts::s_NormalFont,
+                32
+            );
+
+            backToGameButton = std::make_unique<RenderObjects::Button>(
+                "BACK",
+                Fonts::s_NormalFont,
+                Utils::Transform(
+                    Utils::vec2(0, 15),
+                    Utils::vec2(130, 25),
+                    Utils::Alignment::Alignment2D {
+                        Utils::Alignment::MIDDLE,
+                        Utils::Alignment::FRONT
+                    }
+                )
+            );
+
+            mainMenuButton = std::make_unique<RenderObjects::Button>(
+                "TO MAIN MENU",
+                Fonts::s_NormalFont,
+                Utils::Transform(
+                    Utils::vec2(0, 25),
+                    Utils::vec2(130, 25),
+                    Utils::Alignment::Alignment2D {
+                        Utils::Alignment::MIDDLE,
+                        Utils::Alignment::BACK
+                    }
+                )
+            );
+        }
+
+        void render(float deltaTime) override {
+            pauseText->render(deltaTime);
+            backToGameButton->render(deltaTime);
+            mainMenuButton->render(deltaTime);
+        }
+
+        std::unique_ptr<RenderObjects::Text> pauseText;
+        std::unique_ptr<RenderObjects::Button> backToGameButton;
+        std::unique_ptr<RenderObjects::Button> mainMenuButton;
+    };
 }

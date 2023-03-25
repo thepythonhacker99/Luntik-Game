@@ -61,6 +61,8 @@ namespace Luntik::GameObjects {
         }
 
         Utils::vec2 getVel() const { return m_Vel; }
+        void setVel(Utils::vec2 v) { m_Vel = v; }
+
         int getDir() const { return m_Dir; }
 
     private:

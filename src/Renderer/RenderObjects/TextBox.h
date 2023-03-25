@@ -93,6 +93,10 @@ namespace Luntik::Renderer::RenderObjects {
         void updateText() {
             if (!m_Focused) return;
 
+            if (Utils::KeySystem::s_KeySystem->mouseLeft == Utils::KeySystem::JUST_PRESSED) {
+                if (!isPressed(m_Transform)) m_Focused = false;
+            }
+
             if (Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::Key::Escape) == Utils::KeySystem::JUST_PRESSED) {
                 m_Focused = false;
                 return;
@@ -169,6 +173,6 @@ namespace Luntik::Renderer::RenderObjects {
         bool m_AllowNumbers;
         bool m_AllowDash;
 
-        bool m_Focused = true;
+        bool m_Focused = false;
     };
 }

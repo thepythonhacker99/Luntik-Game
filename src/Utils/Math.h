@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Transform.h"
+
 namespace Luntik::Utils::Math {
     static float Q_rsqrt( float number )
     {

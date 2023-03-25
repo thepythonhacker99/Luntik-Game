@@ -11,7 +11,8 @@ namespace Luntik::Renderer::Screens {
         DEFAULT,
         MAIN_GAME_SCREEN,
         INTRO_SCREEN,
-        DISCONNECTED_SCREEN
+        DISCONNECTED_SCREEN,
+        PAUSE_SCREEN
     };
 }
 

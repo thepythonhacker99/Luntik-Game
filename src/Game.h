@@ -40,9 +40,9 @@ namespace Luntik {
             
             Utils::KeySystem::initializeKeySystem();
 
-            s_MainGameScreen = std::make_unique<Renderer::Screens::MainGameScreen>();
             s_IntroScreen = std::make_unique<Renderer::Screens::IntroScreen>();
             s_DisconnectedScreen = std::make_unique<Renderer::Screens::DisconnectedScreen>();
+            s_PauseScreen = std::make_unique<Renderer::Screens::PauseScreen>();
 
             s_Renderer->setScreen(s_IntroScreen.get());
         }
@@ -74,39 +74,14 @@ namespace Luntik {
 
                 switch (s_Renderer->getScreen()->ID) {
                     case Renderer::Screens::MAIN_GAME_SCREEN:
-                        if (s_Client) {
-                            if (s_Client->getConnectionStatus() != CONNECTED) {
-                                std::string disconnectMessage = "";
-                                switch (s_Client->getConnectionStatus()) {
-                                    case DISCONNECTED:
-                                        disconnectMessage = "Disconnected";
-                                        break;
-
-                                    case FAILED_TO_CONNECT:
-                                        disconnectMessage = "Couldn't connect";
-                                        break;
-
-                                    default:
-                                        disconnectMessage = "Something went wrong";
-                                        break;
-                                }
-                                s_DisconnectedScreen->disconnectedText->setText(disconnectMessage);
-                                s_Renderer->setScreen(s_DisconnectedScreen.get());
-
-                                s_MainGameScreen.reset(new Renderer::Screens::MainGameScreen());
-
-                                deleteClient();
-                                deleteServer();
-                            }
-                            else s_Client->tick(deltaTime);
-                        }
+                        tickClient(deltaTime);
                         break;
 
                     case Renderer::Screens::INTRO_SCREEN:
-                        if (s_IntroScreen->joinButton->isPressed(s_IntroScreen->joinButton->getTransform())) {
+                        if (s_IntroScreen->joinButton->pressed()) {
                             initClient();
                             s_Renderer->setScreen(s_MainGameScreen.get());
-                        } else if (s_IntroScreen->hostButton->isPressed(s_IntroScreen->hostButton->getTransform())) {
+                        } else if (s_IntroScreen->hostButton->pressed()) {
                             initServer();
                             s_Server->start();
                             s_Server->runAsynchronously();
@@ -139,12 +114,40 @@ namespace Luntik {
                         break;
 
                     case Renderer::Screens::DISCONNECTED_SCREEN:
-                        if (s_DisconnectedScreen->backButton->isPressed(s_DisconnectedScreen->backButton->getTransform())) {
+                        if (s_DisconnectedScreen->backButton->pressed()) {
                             s_Renderer->setScreen(s_IntroScreen.get());
                         }
                         break;
 
+                    case Renderer::Screens::PAUSE_SCREEN:
+                        tickClient(deltaTime);
+
+                        if (s_PauseScreen->backToGameButton->pressed() || Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::Key::Escape) == Utils::KeySystem::JUST_PRESSED) {
+                            if (s_MainGameScreen.get() != nullptr) {
+                                s_Renderer->setScreen(s_MainGameScreen.get());
+                                s_Client->setPaused(false);
+                            } else {
+                                s_DisconnectedScreen->disconnectedText->setText("Something went real wrong");
+                                s_Renderer->setScreen(s_DisconnectedScreen.get());
+
+                                deleteServer();
+                                deleteClient();
+                            }
+                        } else if (s_PauseScreen->mainMenuButton->pressed()) {
+                            deleteServer();
+                            deleteClient();
+
+                            if (s_IntroScreen.get() != nullptr) s_Renderer->setScreen(s_IntroScreen.get());
+                            else {
+                                s_DisconnectedScreen->disconnectedText->setText("Something went real wrong");
+                                s_Renderer->setScreen(s_DisconnectedScreen.get());
+                            }
+                        }
+
+                        break;
+
                     default:
+                        LOGGER.log("Unknown screen!!!");
                         returnCode = 1;
                         run = false;
                         break;
@@ -164,9 +167,37 @@ namespace Luntik {
         }
 
     private:
+        void tickClient(float deltaTime) {
+            if (s_Client) {
+                if (s_Client->getConnectionStatus() != CONNECTED) {
+                    std::string disconnectMessage = "";
+                    switch (s_Client->getConnectionStatus()) {
+                        case DISCONNECTED:
+                            disconnectMessage = "Disconnected";
+                            break;
+
+                        case FAILED_TO_CONNECT:
+                            disconnectMessage = "Couldn't connect";
+                            break;
+
+                        default:
+                            disconnectMessage = "Something went wrong";
+                            break;
+                    }
+                    s_DisconnectedScreen->disconnectedText->setText(disconnectMessage);
+                    s_Renderer->setScreen(s_DisconnectedScreen.get());
+
+                    deleteClient();
+                    deleteServer();
+                }
+                else s_Client->tick(deltaTime);
+            }
+        }
+
         void initClient() {
             if (!s_Client) {
                 s_Client.reset(new Client(13353, m_Ip));
+                s_MainGameScreen.reset(new Renderer::Screens::MainGameScreen());
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");
@@ -175,6 +206,7 @@ namespace Luntik {
 
         void deleteClient() {
             if (s_Client) {
+                s_MainGameScreen.reset();
                 s_Client->stop();
                 s_Client.reset();
                 LOGGER.log("Client deleted");
