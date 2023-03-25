@@ -16,5 +16,5 @@ namespace Luntik::Settings {
 
     static const float BLOCK_SIZE = 16.f;
 
-    static const int SEND_POS_RATE = 20;
+    static const int SEND_POS_RATE = 30;
 }

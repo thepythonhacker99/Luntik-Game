@@ -17,4 +17,17 @@ namespace Luntik::Utils::Math {
 
         return y;
     }
+
+    template<typename T>
+    T interpolate(T srt, T end, T pos, T amt) { // AMT IS IN 0-1 PERCENT
+        if (srt < end) {
+            T amount = (end - srt) * amt;
+            if (pos + amount < end) return pos + amount;
+        } else if (srt > end) {
+            T amount = (srt - end) * amt;
+            if (pos - amount > end) return pos - amount;
+        }
+
+        return end;
+    }
 }

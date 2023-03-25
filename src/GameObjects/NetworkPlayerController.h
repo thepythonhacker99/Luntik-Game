@@ -3,6 +3,7 @@
 #include "PlayerInfo.h"
 #include "../GameState.h"
 #include "../Renderer/Animations.h"
+#include "../Utils/Math.h"
 
 namespace Luntik::GameObjects {
     class NetworkPlayerController {
@@ -13,7 +14,8 @@ namespace Luntik::GameObjects {
 
         void tick(float deltaTime) {
             if (m_ShouldInterpolate) {
-                m_Player->pos += m_Step * deltaTime;
+                m_Player->pos.x = Utils::Math::interpolate(m_Start.x, m_Goal.x, m_Player->pos.x, (float)(Settings::SEND_POS_RATE * deltaTime * .5));
+                m_Player->pos.y = Utils::Math::interpolate(m_Start.y, m_Goal.y, m_Player->pos.y, (float)(Settings::SEND_POS_RATE * deltaTime * .5));
 
                 if (m_Player->acc != 0) {
                     s_MainGameScreen->otherPlayers.at(m_Id)->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::RUN);
@@ -29,9 +31,11 @@ namespace Luntik::GameObjects {
 
         void setGoal(Utils::vec2 goal) {
             m_Goal = goal;
-            m_Step = (m_Goal - m_Player->pos) * Settings::SEND_POS_RATE;
-
-            m_ShouldInterpolate = true;
+            m_Start = m_Player->pos;
+            if (!m_ShouldInterpolate) {
+                m_Player->pos = goal;
+                m_ShouldInterpolate = true;
+            }
         }
 
         Utils::vec2 getGoal() const { return m_Goal; }
@@ -47,7 +51,7 @@ namespace Luntik::GameObjects {
     private:
         bool m_ShouldInterpolate = false;
         Utils::vec2 m_Goal;
-        Utils::vec2 m_Step;
+        Utils::vec2 m_Start;
         uint32_t m_Id;
         PlayerInfo* m_Player;
     };
