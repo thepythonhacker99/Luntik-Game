@@ -16,16 +16,6 @@ namespace Luntik::GameObjects {
             if (m_ShouldInterpolate) {
                 m_Player->pos.x = Utils::Math::interpolate(m_Start.x, m_Goal.x, m_Player->pos.x, (float)(Settings::SEND_POS_RATE * deltaTime * .5));
                 m_Player->pos.y = Utils::Math::interpolate(m_Start.y, m_Goal.y, m_Player->pos.y, (float)(Settings::SEND_POS_RATE * deltaTime * .5));
-
-                if (m_Player->acc != 0) {
-                    s_MainGameScreen->otherPlayers.at(m_Id)->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::RUN);
-                } else {
-                    s_MainGameScreen->otherPlayers.at(m_Id)->setAnimationKey(Renderer::Animations::PLAYER_ANIMATIONS::IDLE);
-                }
-                
-                if (m_Player->acc.x != 0) {
-                    s_MainGameScreen->otherPlayers.at(m_Id)->getImage()->setStretchSize({ Settings::BLOCK_SIZE * m_Player->acc.x, Settings::BLOCK_SIZE });
-                }
             }
         }
 

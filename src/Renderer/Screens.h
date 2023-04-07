@@ -5,6 +5,7 @@
 #include "RenderObjects/Text.h"
 #include "RenderObjects/Button.h"
 #include "RenderObjects/TextBox.h"
+#include "RenderObjects/RenderedPlayer.h"
 
 #include "Screen.h"
 
@@ -29,12 +30,18 @@ namespace Luntik::Renderer::Screens {
                 0
             });
 
+            if (!amongusShader.loadFromFile("shaders/amongus.frag", sf::Shader::Fragment)) {
+                std::cerr << "Failed to load BG shader" << std::endl;
+                std::exit(1);
+            }
+
+            amongusShader.setUniform("texture", sf::Shader::CurrentTexture);
+            amongusShader.setUniform("bodyColor", sf::Vector3f(255.f, 0.f, 0.f));
+
             blockSprite = std::make_unique<RenderObjects::Sprite>(Textures::s_BlockTexture, Utils::vec2{ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE });
             blockSprite->getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
 
-            playerSprite = std::make_unique<RenderObjects::AnimatedSprite>(Utils::vec2{ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE }, Animations::s_PlayerAnimation);
-            playerSprite->setAnimationKey(Animations::PLAYER_ANIMATIONS::IDLE);
-            playerSprite->getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
+            renderedPlayer = std::make_unique<RenderObjects::RenderedPlayer>(&amongusShader);
 
             text = std::make_unique<RenderObjects::Text>(
                 "Luntik",
@@ -54,18 +61,16 @@ namespace Luntik::Renderer::Screens {
         void render(float deltaTime) override {
             blockSprite->render(deltaTime);
 
-            for (auto& [id, sprite] : otherPlayers) {
-                sprite->render(deltaTime);
+            for (auto& [id, otherRenderedPlayer] : otherPlayers) {
+                otherRenderedPlayer->render(deltaTime);
             }
 
-            playerSprite->render(deltaTime);
+            renderedPlayer->render(deltaTime);
         }
 
-        void addOtherPlayer(uint32_t id) {
-            if (otherPlayers.count(id) == 0) {
-                otherPlayers[id] = std::make_unique<RenderObjects::AnimatedSprite>(Utils::vec2{ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE }, Animations::s_PlayerAnimation);
-                otherPlayers.at(id)->setAnimationKey(Animations::PLAYER_ANIMATIONS::IDLE);
-                otherPlayers.at(id)->getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
+        void addOtherPlayer(uint32_t id, GameObjects::PlayerInfo* otherPlayerInfo) {
+            if (otherPlayers.find(id) == otherPlayers.end()) {
+                otherPlayers[id] = std::make_unique<RenderObjects::RenderedPlayer>(&amongusShader, otherPlayerInfo);
             }
         }
 
@@ -73,10 +78,13 @@ namespace Luntik::Renderer::Screens {
             otherPlayers.erase(id);
         }
 
-        std::unordered_map<uint32_t, std::unique_ptr<RenderObjects::AnimatedSprite>> otherPlayers;
-        std::unique_ptr<RenderObjects::AnimatedSprite> playerSprite;
+        std::unordered_map<uint32_t, std::unique_ptr<RenderObjects::RenderedPlayer>> otherPlayers;
+        std::unique_ptr<RenderObjects::RenderedPlayer> renderedPlayer;
         std::unique_ptr<RenderObjects::Sprite> blockSprite;
         std::unique_ptr<RenderObjects::Text> text;
+
+    private:
+        sf::Shader amongusShader;
     };
 
     class IntroScreen : public Screen {
@@ -92,11 +100,11 @@ namespace Luntik::Renderer::Screens {
             title = std::make_unique<RenderObjects::Text>(
                 "Luntik",
                 Utils::Transform(
-                    Utils::vec2{ 0, -40 },
+                    Utils::vec2{ 0, -30 },
                     Utils::vec2{ 0, 0 },
                     Utils::Alignment::Alignment2D {
                         Utils::Alignment::MIDDLE,
-                        Utils::Alignment::MIDDLE
+                        Utils::Alignment::FRONT
                     }
                 ),
                 Fonts::s_NormalFont,
@@ -107,11 +115,11 @@ namespace Luntik::Renderer::Screens {
                 "JOIN",
                 Fonts::s_NormalFont,
                 Utils::Transform(
-                    Utils::vec2(0, 15),
+                    Utils::vec2(0, 17),
                     Utils::vec2(130, 25),
                     Utils::Alignment::Alignment2D {
                         Utils::Alignment::MIDDLE,
-                        Utils::Alignment::FRONT
+                        Utils::Alignment::BACK
                     }
                 )
             );
@@ -120,7 +128,7 @@ namespace Luntik::Renderer::Screens {
                 "HOST",
                 Fonts::s_NormalFont,
                 Utils::Transform(
-                    Utils::vec2(0, 25),
+                    Utils::vec2(0, 47),
                     Utils::vec2(130, 25),
                     Utils::Alignment::Alignment2D {
                         Utils::Alignment::MIDDLE,
@@ -132,11 +140,11 @@ namespace Luntik::Renderer::Screens {
             textBox = std::make_unique<RenderObjects::TextBox>(
                 Fonts::s_NormalFont,
                 Utils::Transform(
-                    Utils::vec2(0, -10),
+                    Utils::vec2(0, 12),
                     Utils::vec2(130, 25),
                     Utils::Alignment::Alignment2D {
                         Utils::Alignment::MIDDLE,
-                        Utils::Alignment::MIDDLE
+                        Utils::Alignment::FRONT
                     }
                 ),
                 10

@@ -130,12 +130,12 @@ namespace Luntik {
                                 s_DisconnectedScreen->disconnectedText->setText("Something went real wrong");
                                 s_Renderer->setScreen(s_DisconnectedScreen.get());
 
-                                deleteServer();
                                 deleteClient();
+                                deleteServer();
                             }
                         } else if (s_PauseScreen->mainMenuButton->pressed()) {
-                            deleteServer();
                             deleteClient();
+                            deleteServer();
 
                             if (s_IntroScreen.get() != nullptr) s_Renderer->setScreen(s_IntroScreen.get());
                             else {
@@ -196,8 +196,9 @@ namespace Luntik {
 
         void initClient() {
             if (!s_Client) {
-                s_Client.reset(new Client(13353, m_Ip));
+                LOGGER.log("Initting client");
                 s_MainGameScreen.reset(new Renderer::Screens::MainGameScreen());
+                s_Client.reset(new Client(13353, m_Ip));
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");
@@ -206,6 +207,7 @@ namespace Luntik {
 
         void deleteClient() {
             if (s_Client) {
+                LOGGER.log("Deleting client");
                 s_MainGameScreen.reset();
                 s_Client->stop();
                 s_Client.reset();
@@ -215,6 +217,7 @@ namespace Luntik {
 
         void initServer() {
             if (!s_Server) {
+                LOGGER.log("Initting server");
                 s_Server.reset(new Server(13353, sf::IpAddress::getLocalAddress()));
                 LOGGER.log("Server created");
             } else {
@@ -224,6 +227,7 @@ namespace Luntik {
 
         void deleteServer() {
             if (s_Server) {
+                LOGGER.log("Deleting server");
                 s_Server->stop();
                 s_Server.reset();
                 LOGGER.log("Server deleted");

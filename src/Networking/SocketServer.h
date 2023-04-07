@@ -58,8 +58,8 @@ namespace Luntik::Network {
 
         void tick() {
             handleNewConnections();
-            handleDisconnections();
             handleReceivedPackets();
+            handleDisconnections();
         }
 
         void stop() {
@@ -76,7 +76,6 @@ namespace Luntik::Network {
             for (auto& [id, clientInfo] : m_Clients) {
                 std::lock_guard<std::mutex> lock(*clientInfo.runClientMutex);
                 clientInfo.runClientThread.reset(new bool{false});
-                clientInfo.socket->disconnect();
             }
             /////
 
@@ -155,20 +154,25 @@ namespace Luntik::Network {
 
             while (!m_DisconnectedClientsQueue.empty()) {
                 ID id = m_DisconnectedClientsQueue.front();
+
                 LOGGER.log("Removing client: " + std::to_string(id));
                 
-                m_Clients.at(id).clientThread.join();
+                
+                if (m_Clients.find(id) != m_Clients.end()) {
+                    if (m_Clients.at(id).clientThread.joinable()) m_Clients.at(id).clientThread.join();
+                }
+
                 m_Clients.erase(id);
 
                 LOGGER.log("Calling synced OnClientDisconnected");
                 m_CallbackOnClientDisconnected(id);
 
                 m_DisconnectedClientsQueue.pop();
+                LOGGER.log("Finished disconnecting client");
             }
         }
 
         void handleReceivedPackets() {
-            
             std::lock_guard<std::mutex> lock(m_ReceivedPacketsQueueMutex);
 
             while (!m_ReceivedPacketsQueue.empty()) {

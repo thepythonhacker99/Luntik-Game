@@ -21,6 +21,8 @@ namespace Luntik {
             m_SocketSever.onClientDisconnected(std::bind(&Server::handleDisconnection, this, std::placeholders::_1));
 
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_POSITION_PACKET, std::bind(&Server::handleC2SPositionPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            m_SocketSever.setPacketReceiver(Network::Packets::C2S_NAME_PACKET, std::bind(&Server::handleC2SNamePacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            m_SocketSever.setPacketReceiver(Network::Packets::C2S_COLOR_PACKET, std::bind(&Server::handleC2SColorPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         }
 
         ~Server() {
@@ -29,6 +31,7 @@ namespace Luntik {
 
         void tick(float deltaTime) {
             m_SocketSever.tick();
+            checkTempPlayers();
             sendPositionToClients();
         }
 
@@ -95,16 +98,32 @@ namespace Luntik {
             }
         }
 
+        void checkTempPlayers() {
+            std::vector<Network::ID> removeIds;
+
+            for (auto& [id, tempPlayerInfo] : m_TempPlayers) {
+                if (tempPlayerInfo.isReady()) {
+                    removeIds.push_back(id);
+
+                    m_Players[id] = tempPlayerInfo;
+
+                    sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ id, m_Players.at(id).name, m_Players.at(id).pos, m_Players.at(id).color });
+                    m_SocketSever.broadcastPacketWithout(packet, id);
+                }
+            }
+
+            for (Network::ID id : removeIds) {
+                m_TempPlayers.erase(id);
+            }
+        }
+
         void handleNewConnection(Network::ID senderId, sf::TcpSocket* senderSocket) {
             LOGGER.log("New connection established: " + senderSocket->getRemoteAddress().toString() + ":" + std::to_string(senderSocket->getRemotePort()));
-            m_Players[senderId];
-
-            sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ senderId, "", m_Players.at(senderId).pos });
-            m_SocketSever.broadcastPacketWithout(packet, senderId);
+            m_TempPlayers[senderId];
 
             for (auto& [clientId, clientInfo] : m_Players) {
                 if (clientId == senderId) continue;
-                sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ clientId, "", clientInfo.pos }); // TODO: replace "" with clientInfo.getName() after adding names
+                sf::Packet packet = Network::Packets::createS2CPlayerConnectedPacket({ clientId, clientInfo.name, clientInfo.pos, clientInfo.color });
                 senderSocket->send(packet);
             }
         }
@@ -123,7 +142,7 @@ namespace Luntik {
         void handleC2SPositionPacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
             try {
                 Network::Packets::C2S_PositionPacketInfo packetInfo = Network::Packets::readC2SPositionPacket(packet);
-                if (m_Players.count(senderId) > 0) {
+                if (m_Players.find(senderId) != m_Players.end()) {
                     m_Players.at(senderId).pos = packetInfo.pos;
                     m_Players.at(senderId).acc = packetInfo.acc;
                 }
@@ -135,9 +154,47 @@ namespace Luntik {
             }
         }
 
+        void handleC2SNamePacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
+            try {
+                Network::Packets::C2S_NamePacketInfo packetInfo = Network::Packets::readC2SNamePacket(packet);
+                if (m_Players.find(senderId) != m_Players.end()) {
+                    m_Players.at(senderId).name = packetInfo.name;
+
+                    sf::Packet packet = Network::Packets::createS2CNamePacket({ packetInfo.name, senderId });
+                    m_SocketSever.broadcastPacketWithout(packet, senderId);
+                } else if (m_TempPlayers.find(senderId) != m_TempPlayers.end()) {
+                    m_TempPlayers.at(senderId).name = packetInfo.name;
+                }
+            } catch (const std::runtime_error& e) {
+                std::cout << "Error while reading packet of type: C2S_POSITION_PACKET\n";
+                std::cout << "Sender ID: " << senderId << "\n";
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        }
+
+        void handleC2SColorPacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
+            try {
+                Network::Packets::C2S_ColorPacketInfo packetInfo = Network::Packets::readC2SColorPacket(packet);
+                LOGGER.log("Got a color packet from: " + std::to_string(senderId) + ", color is: " + std::to_string(packetInfo.color.x) + " " + std::to_string(packetInfo.color.y) + " " + std::to_string(packetInfo.color.z));
+                if (m_Players.find(senderId) != m_Players.end()) {
+                    m_Players.at(senderId).color = packetInfo.color;
+
+                    sf::Packet packet = Network::Packets::createS2CColorPacket({ senderId, packetInfo.color });
+                    m_SocketSever.broadcastPacketWithout(packet, senderId);
+                } else if (m_TempPlayers.find(senderId) != m_TempPlayers.end()) {
+                    m_TempPlayers.at(senderId).color = packetInfo.color;
+                }
+            } catch (const std::runtime_error& e) {
+                std::cout << "Error while reading packet of type: C2S_COLOR_PACKET\n";
+                std::cout << "Sender ID: " << senderId << "\n";
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        }
+
         Utils::Logger LOGGER{"Luntik::Server"};
 
         // SERVER VARS
+        std::unordered_map<Network::ID, GameObjects::PlayerInfo> m_TempPlayers;
         std::unordered_map<Network::ID, GameObjects::PlayerInfo> m_Players;
         
         // NETWORKING

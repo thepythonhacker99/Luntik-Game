@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "random.hpp"
+
 #include "SFML/Network.hpp"
 
 #include "GameObjects/ClientPlayerController.h"
@@ -44,6 +46,8 @@ namespace Luntik {
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_PLAYER_CONNECTED_PACKET, std::bind(&Client::handlePlayerConnectedPacket, this, std::placeholders::_1));
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_PLAYER_DISCONNECTED_PACKET, std::bind(&Client::handlePlayerDisconnectedPacket, this, std::placeholders::_1));
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_POSITION_PACKET, std::bind(&Client::handlePlayerPositionPacket, this, std::placeholders::_1));
+            m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_NAME_PACKET, std::bind(&Client::handlePlayerNamePacket, this, std::placeholders::_1));
+            m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_COLOR_PACKET, std::bind(&Client::handlePlayerColorPacket, this, std::placeholders::_1));
 
             try {
                 m_Client.start();
@@ -52,6 +56,19 @@ namespace Luntik {
                 LOGGER.log(std::string("Error while connecting: ") + e.what());
                 m_ConnectionStatus = FAILED_TO_CONNECT;
             }
+
+            m_PlayerInfo.name = s_IntroScreen->textBox->getText();
+            s_MainGameScreen->renderedPlayer->setPlayer(&m_PlayerInfo);
+
+            m_PlayerInfo.color.x = Random::get(0.f, 1.f);
+            m_PlayerInfo.color.y = Random::get(0.f, 1.f);
+            m_PlayerInfo.color.z = Random::get(0.f, 1.f);
+
+            sf::Packet namePacket = Network::Packets::createC2SNamePacket({ m_PlayerInfo.name });
+            m_Client.getSocket()->send(namePacket);
+
+            sf::Packet colorPacket = Network::Packets::createC2SColorPacket({ m_PlayerInfo.color });
+            m_Client.getSocket()->send(colorPacket);
         }
 
         ~Client() {
@@ -59,18 +76,13 @@ namespace Luntik {
         }
 
         void tick(float deltaTime) {
-            if (!m_Paused) {
+            if (!getPaused()) {
                 if (Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::Key::Escape) == Utils::KeySystem::JUST_PRESSED) {
                     s_Renderer->setScreen(s_PauseScreen.get());
                     setPaused(true);
                 }
                 
                 m_ClientPlayerController.tick(deltaTime);
-
-                for (auto& [id, sprite] : s_MainGameScreen->otherPlayers) {
-                    if (m_OtherPlayers.find(id) == m_OtherPlayers.end()) continue;
-                    sprite->getImage()->getTransform().setPos(m_OtherPlayers.at(id).playerInfo.pos);
-                }
             } else {
                 m_PlayerInfo.acc = { 0, 0 };
                 m_ClientPlayerController.setVel({ 0, 0 });
@@ -101,6 +113,16 @@ namespace Luntik {
         void setPaused(bool paused) { m_Paused = paused; }
 
     private:
+        void createOtherPlayer(Network::ID id, Utils::vec2 pos, const std::string& name, sf::Vector3f color) {
+            m_OtherPlayers.emplace(id, OtherPlayer(pos, id));
+            m_OtherPlayers.at(id).controller.setPlayer(&m_OtherPlayers.at(id).playerInfo, id);
+            m_OtherPlayers.at(id).controller.setGoal(pos);
+            m_OtherPlayers.at(id).playerInfo.name = name;
+            m_OtherPlayers.at(id).playerInfo.color = color;
+
+            s_MainGameScreen->addOtherPlayer(id, &m_OtherPlayers.at(id).playerInfo);
+        }
+
         void handleDisconnectedFromServer() {
             LOGGER.log("Got disconnected from server");
             m_ConnectionStatus = DISCONNECTED;
@@ -110,21 +132,18 @@ namespace Luntik {
             LOGGER.log("New player connected");
             try {
                 Network::Packets::S2C_PlayerConnectedPacketInfo packetInfo = Network::Packets::readS2CPlayerConnectedPacket(packet);
-                LOGGER.log("New player ID: " + std::to_string(packetInfo.id));
-                LOGGER.log("New player name: " + packetInfo.name);
-                LOGGER.log("New player pos: " + (std::string)(packetInfo.pos));
-
-                if (m_OtherPlayers.count(packetInfo.id) != 0) {
-                    LOGGER.log("Player already exists in client!"); 
+                if (m_OtherPlayers.find(packetInfo.id) != m_OtherPlayers.end()) {
+                    LOGGER.log("Player already exists in client!");
+                    m_OtherPlayers.at(packetInfo.id).playerInfo.pos = packetInfo.pos;
                     return;
                 }
 
-                m_OtherPlayers.emplace(packetInfo.id, OtherPlayer(packetInfo.pos, packetInfo.id));
-                m_OtherPlayers.at(packetInfo.id).controller.setPlayer(&m_OtherPlayers.at(packetInfo.id).playerInfo, packetInfo.id);
-                m_OtherPlayers.at(packetInfo.id).controller.setGoal(packetInfo.pos);
-                // m_OtherPlayers.at(packetInfo.id).setName(packetInfo.name);
+                LOGGER.log("New player ID: " + std::to_string(packetInfo.id));
+                LOGGER.log("New player name: " + packetInfo.name);
+                LOGGER.log("New player pos: " + (std::string)(packetInfo.pos));
+                LOGGER.log("New player color: " + std::to_string(packetInfo.color.x) + " " + std::to_string(packetInfo.color.y) + " " + std::to_string(packetInfo.color.z));
 
-                s_MainGameScreen->addOtherPlayer(packetInfo.id);
+                createOtherPlayer(packetInfo.id, packetInfo.pos, packetInfo.name, packetInfo.color);
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a new player: ") + e.what());
             }
@@ -161,6 +180,41 @@ namespace Luntik {
                 m_OtherPlayers.at(packetInfo.id).playerInfo.acc = packetInfo.acc;
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a new position packet: ") + e.what());
+            }
+        }
+
+        void handlePlayerNamePacket(sf::Packet packet) {
+            try {
+                Network::Packets::S2C_NamePacketInfo packetInfo = Network::Packets::readS2CNamePacket(packet);
+
+                if (m_OtherPlayers.find(packetInfo.id) == m_OtherPlayers.end()) {
+                    // createOtherPlayer(packetInfo.id, Utils::vec2(0, 0), packetInfo.name);
+                    LOGGER.log("Player with id " + std::to_string(packetInfo.id) + " does not exist in client! (handlePlayerNamePacket)");
+                    return;
+                }
+                m_OtherPlayers.at(packetInfo.id).playerInfo.name = packetInfo.name;
+                s_MainGameScreen->otherPlayers.at(packetInfo.id)->updateNameText();
+            } catch (const std::exception& e) {
+                LOGGER.log(std::string("Error while handling a new position packet: ") + e.what());
+            }
+        }
+
+        void handlePlayerColorPacket(sf::Packet packet) {
+            try {
+                Network::Packets::S2C_ColorPacketInfo packetInfo = Network::Packets::readS2CColorPacket(packet);
+                LOGGER.log("Got a color packet");
+                LOGGER.log("Id: " + std::to_string(packetInfo.id));
+                LOGGER.log("Color: " + std::to_string(packetInfo.color.x) + " " + std::to_string(packetInfo.color.y) + " " + std::to_string(packetInfo.color.z));
+
+                if (m_OtherPlayers.find(packetInfo.id) == m_OtherPlayers.end()) {
+                    // createOtherPlayer(packetInfo.id, Utils::vec2(0, 0), packetInfo.name);
+                    LOGGER.log("Player with id " + std::to_string(packetInfo.id) + " does not exist in client! (handlePlayerColorPacket)");
+                    return;
+                }
+
+                m_OtherPlayers.at(packetInfo.id).playerInfo.color = packetInfo.color;
+            } catch (const std::exception& e) {
+                LOGGER.log(std::string("Error while handling a color packet: ") + e.what());
             }
         }
 

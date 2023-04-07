@@ -10,6 +10,12 @@ namespace Luntik::Network {
 
 namespace Luntik::Network::Packets {
     enum PacketType {
+        C2S_COLOR_PACKET,
+        S2C_COLOR_PACKET,
+
+        C2S_NAME_PACKET,
+        S2C_NAME_PACKET,
+
         S2C_PLAYER_CONNECTED_PACKET,
         S2C_PLAYER_DISCONNECTED_PACKET,
 
@@ -45,6 +51,20 @@ sf::Packet& operator>>(sf::Packet& packet, Luntik::Utils::vec2& vec)
     return packet;
 }
 
+
+sf::Packet& operator<<(sf::Packet& packet, const sf::Vector3f& vec)
+{
+    packet << vec.x << vec.y << vec.z;
+    return packet;
+}
+
+sf::Packet& operator>>(sf::Packet& packet, sf::Vector3f& vec)
+{
+    packet >> vec.x >> vec.y >> vec.z;
+    return packet;
+}
+
+
 namespace Luntik::Network::Packets {
     template<typename T>
     T read(sf::Packet& packet) {
@@ -62,6 +82,83 @@ namespace Luntik::Network::Packets {
         throw std::runtime_error("Could not read packet - packet does not have more bytes");
     }
 
+    // C2S_COLOR_PACKET
+    struct C2S_ColorPacketInfo {
+        sf::Vector3f color;
+    };
+
+    sf::Packet createC2SColorPacket(const C2S_ColorPacketInfo& info) {
+        sf::Packet packet;
+        packet << C2S_COLOR_PACKET;
+        packet << info.color;
+        return packet;
+    }
+
+    C2S_ColorPacketInfo readC2SColorPacket(sf::Packet& packet) {
+        C2S_ColorPacketInfo info;
+        info.color = read<sf::Vector3f>(packet);
+        return info;
+    }
+
+    // S2C_COLOR_PACKET
+    struct S2C_ColorPacketInfo {
+        ID id;
+        sf::Vector3f color;
+    };
+
+    sf::Packet createS2CColorPacket(const S2C_ColorPacketInfo& info) {
+        sf::Packet packet;
+        packet << S2C_COLOR_PACKET;
+        packet << info.id;
+        packet << info.color;
+        return packet;
+    }
+
+    S2C_ColorPacketInfo readS2CColorPacket(sf::Packet& packet) {
+        S2C_ColorPacketInfo info;
+        info.id = read<ID>(packet);
+        info.color = read<sf::Vector3f>(packet);
+        return info;
+    }
+
+    // C2S_NAME_PACKET
+    struct C2S_NamePacketInfo {
+        std::string name;
+    };
+
+    sf::Packet createC2SNamePacket(const C2S_NamePacketInfo& info) {
+        sf::Packet packet;
+        packet << C2S_NAME_PACKET;
+        packet << info.name;
+        return packet;
+    }
+
+    C2S_NamePacketInfo readC2SNamePacket(sf::Packet& packet) {
+        C2S_NamePacketInfo info;
+        info.name = read<std::string>(packet);
+        return info;
+    }
+
+    // S2C_NAME_PACKET
+    struct S2C_NamePacketInfo {
+        std::string name;
+        ID id;
+    };
+
+    sf::Packet createS2CNamePacket(const S2C_NamePacketInfo& info) {
+        sf::Packet packet;
+        packet << S2C_NAME_PACKET;
+        packet << info.name;
+        packet << info.id;
+        return packet;
+    }
+
+    S2C_NamePacketInfo readS2CNamePacket(sf::Packet& packet) {
+        S2C_NamePacketInfo info;
+        info.name = read<std::string>(packet);
+        info.id = read<ID>(packet);
+        return info;
+    }
 
     // C2S_POSITION_PACKET
     struct C2S_PositionPacketInfo {
@@ -113,6 +210,7 @@ namespace Luntik::Network::Packets {
         ID id;
         std::string name;
         Utils::vec2 pos;
+        sf::Vector3f color;
     };
 
     sf::Packet createS2CPlayerConnectedPacket(const S2C_PlayerConnectedPacketInfo& info) {
@@ -121,6 +219,7 @@ namespace Luntik::Network::Packets {
         packet << info.id;
         packet << info.name;
         packet << info.pos;
+        packet << info.color;
         return packet;
     }
 
@@ -129,6 +228,7 @@ namespace Luntik::Network::Packets {
         info.id = read<ID>(packet);
         info.name = read<std::string>(packet);
         info.pos = read<Utils::vec2>(packet);
+        info.color = read<sf::Vector3f>(packet);
         return info;
     }
 

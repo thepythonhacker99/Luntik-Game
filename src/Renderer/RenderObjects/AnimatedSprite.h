@@ -13,8 +13,8 @@
 namespace Luntik::Renderer::RenderObjects {
     class AnimatedSprite : public Sprite {
     public:
-        AnimatedSprite(Utils::vec2 stretchSize, std::unordered_map<int, Utils::Animation> textures)
-            : Sprite(nullptr, stretchSize)
+        AnimatedSprite(Utils::vec2 stretchSize, std::unordered_map<int, Utils::Animation> textures, sf::Shader* shader=nullptr)
+            : Sprite(nullptr, stretchSize, shader)
         {
             m_Textures = textures;
             time = 0.f;
@@ -39,7 +39,7 @@ namespace Luntik::Renderer::RenderObjects {
             update(deltaTime);
             getImage()->setTexture(m_Textures.at(m_AnimationKey).frames.at(frame));
 
-            if (getImage()) s_Renderer->getWindow()->getSFMLWindow()->draw(getImage()->asSFMLSprite());
+            Sprite::render(deltaTime);
         }
 
         int getAnimationKey() {
