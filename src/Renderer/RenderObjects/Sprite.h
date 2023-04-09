@@ -25,7 +25,6 @@ namespace Luntik::Renderer::RenderObjects {
         }
 
         void render(float deltaTime) override {
-
             if (m_Image);
                 s_Renderer->getWindow()->getSFMLWindow()->draw(m_Image->asSFMLSprite(), m_Shader);
         }

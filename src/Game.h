@@ -34,6 +34,10 @@ namespace Luntik {
             Renderer::Textures::loadTextures();
             Renderer::Animations::loadAnimations();
             Renderer::Fonts::loadFonts();
+            Renderer::RenderObjects::initSprites();
+
+            s_PerlinNoise = std::make_unique<SimplexNoise>();
+            s_PerlinNoise->randomizeSeed();
 
             s_Renderer = std::make_unique<Renderer::Renderer>();
             s_Renderer->getWindow()->getSFMLWindow()->setVerticalSyncEnabled(true);
@@ -50,6 +54,7 @@ namespace Luntik {
         ~Game() {
             Renderer::Textures::unloadTextures();
             Renderer::Fonts::unloadFonts();
+            Renderer::RenderObjects::uninitSprites();
             GameState::uninitGameState();
         }
 
@@ -62,6 +67,8 @@ namespace Luntik {
 
             while (run) {
                 float deltaTime = timer.restart().asSeconds();
+                if (deltaTime > 1.f / 30.f) deltaTime = 1.f / 30.f;
+
                 time += deltaTime;
                 frames++;
 
@@ -79,7 +86,7 @@ namespace Luntik {
 
                     case Renderer::Screens::INTRO_SCREEN:
                         if (s_IntroScreen->joinButton->pressed()) {
-                            initClient();
+                            initClient(m_Ip);
                             s_Renderer->setScreen(s_MainGameScreen.get());
                         } else if (s_IntroScreen->hostButton->pressed()) {
                             initServer();
@@ -194,11 +201,11 @@ namespace Luntik {
             }
         }
 
-        void initClient() {
+        void initClient(sf::IpAddress addr=sf::IpAddress::getLocalAddress()) {
             if (!s_Client) {
                 LOGGER.log("Initting client");
                 s_MainGameScreen.reset(new Renderer::Screens::MainGameScreen());
-                s_Client.reset(new Client(13353, m_Ip));
+                s_Client.reset(new Client(13353, addr));
                 LOGGER.log("Client created");
             } else {
                 LOGGER.log("Client already created");

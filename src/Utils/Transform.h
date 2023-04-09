@@ -20,15 +20,15 @@ namespace Luntik::Utils {
 
         vec2 getPosWithAlignment() const { return m_PosWithAlignment; }
         vec2 getPosWithAlignment(Alignment::Alignment2D alignment) {
-            return vec2(m_Pos - (m_Size * ((vec2)(alignment) / 2)));
+            return getPosWithAlignment(m_Pos, m_Size, alignment);
         }
 
         static vec2 getPosWithAlignment(vec2 pos, vec2 size, Alignment::Alignment2D alignment) {
-            return vec2(pos - (size * ((vec2)(alignment) / 2)));
+            return vec2(pos - (Utils::vec2::abs(size) * ((vec2)(alignment) / 2)));
         }
 
         vec2 getMiddle() {
-            return m_PosWithAlignment + (m_Size / 2);
+            return m_PosWithAlignment + (Utils::vec2::abs(m_Size) / 2);
         }
 
         vec2 getRawPos() const { return this->m_Pos; }

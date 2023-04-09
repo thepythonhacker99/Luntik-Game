@@ -3,7 +3,7 @@
 #include "Transform.h"
 
 namespace Luntik::Utils::Math {
-    static float Q_rsqrt( float number )
+    float Q_rsqrt( float number )
     {
         long i;
         float x2, y;
@@ -31,5 +31,24 @@ namespace Luntik::Utils::Math {
         }
 
         return end;
+    }
+
+    int hash_function(int key) {
+        // Convert the integer key to a string
+        std::string str_key = std::to_string(key);
+
+        // Initialize variables for hash computation
+        int hash_value = 0;
+        int prime = 31;
+        int exponent = 1;
+
+        // Compute hash value using Horner's method
+        for (int i = str_key.size() - 1; i >= 0; i--) {
+            hash_value += (str_key[i] - '0') * exponent;
+            exponent *= prime;
+        }
+
+        // Reduce hash value to a smaller range
+        return std::abs(hash_value % 1000000);
     }
 }

@@ -8,7 +8,7 @@
 #include "../../Utils/KeySystem.h"
 
 namespace Luntik::Renderer::RenderObjects {
-    static const std::unordered_map<sf::Keyboard::Key, char> LETTERS_KEY_MAP = {
+    inline const std::unordered_map<sf::Keyboard::Key, char> LETTERS_KEY_MAP = {
         { sf::Keyboard::Key::A, 'A' },
         { sf::Keyboard::Key::B, 'B' },
         { sf::Keyboard::Key::C, 'C' },
@@ -37,7 +37,7 @@ namespace Luntik::Renderer::RenderObjects {
         { sf::Keyboard::Key::Z, 'Z' }
     };
 
-    static const std::unordered_map<sf::Keyboard::Key, char> NUMBERS_KEY_MAP = {
+    inline const std::unordered_map<sf::Keyboard::Key, char> NUMBERS_KEY_MAP = {
         { sf::Keyboard::Key::Num0, '0' },
         { sf::Keyboard::Key::Num1, '1' },
         { sf::Keyboard::Key::Num2, '2' },
@@ -50,8 +50,8 @@ namespace Luntik::Renderer::RenderObjects {
         { sf::Keyboard::Key::Num9, '9' },
     };
 
-    static const char BACKSPACE = '\r';
-    static const char DASH = '-';
+    constexpr char BACKSPACE = '\r';
+    constexpr char DASH = '-';
 
     class TextBox : public RenderedObject {
     public:

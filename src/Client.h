@@ -9,6 +9,8 @@
 #include "GameObjects/ClientPlayerController.h"
 #include "GameObjects/NetworkPlayerController.h"
 #include "GameObjects/PlayerInfo.h"
+#include "GameObjects/ChunkInfo.h"
+#include "GameObjects/ChunkManager.h"
 
 #include "Renderer/Screens.h"
 
@@ -76,18 +78,20 @@ namespace Luntik {
         }
 
         void tick(float deltaTime) {
-            if (!getPaused()) {
+            if (!getPaused()) { // when game is not paused
                 if (Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::Key::Escape) == Utils::KeySystem::JUST_PRESSED) {
                     s_Renderer->setScreen(s_PauseScreen.get());
                     setPaused(true);
                 }
                 
                 m_ClientPlayerController.tick(deltaTime);
-            } else {
+                s_MainGameScreen->chunkManager->tick(deltaTime);
+            } else { // when game is paused
                 m_PlayerInfo.acc = { 0, 0 };
                 m_ClientPlayerController.setVel({ 0, 0 });
             }
 
+            // regardless if the game is paused or not
             m_Client.tick();
 
             for (auto& [id, otherPlayer] : m_OtherPlayers) {

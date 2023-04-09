@@ -10,7 +10,7 @@
 namespace Luntik::Utils::KeySystem {
     class KeySystem;
 
-    static KeySystem* s_KeySystem;
+    inline KeySystem* s_KeySystem;
 
     enum KeyState {
         NOT_PRESSED,
@@ -85,7 +85,7 @@ namespace Luntik::Utils::KeySystem {
             KeyState mouseRight = NOT_PRESSED;
     };
 
-    static void initializeKeySystem() {
+    inline void initializeKeySystem() {
         s_KeySystem = new KeySystem();
     }
 

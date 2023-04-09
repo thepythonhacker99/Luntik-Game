@@ -32,14 +32,18 @@ namespace Luntik::Utils {
             this->y = v.y;
         }
 
-        static vec2 clamp(vec2 v, float minVal, float maxVal) {
+        static vec2 clamp(const vec2& v, float minVal, float maxVal) {
             return vec2(std::max(std::min(v.x, maxVal), minVal), std::max(std::min(v.y, maxVal), minVal));
         }
 
-        static vec2 normalize(vec2 v) {
+        static vec2 normalize(const vec2& v) {
             double s = Math::Q_rsqrt(v.x*v.x + v.y*v.y);
             sf::Vector2f r = { float(v.x * s), float(v.y * s) };
             return { v.x == 0 ? 0 : r.x, v.y == 0 ? 0 : r.y};
+        }
+
+        static vec2 abs(const vec2& v) {
+            return vec2(std::abs(v.x), std::abs(v.y));
         }
         
         operator sf::Vector2f() {

@@ -7,30 +7,34 @@
 #include "SFML/Graphics.hpp"
 
 namespace Luntik::Renderer::Textures {
-    static Utils::TextureMap::TextureMap* s_TextureMap;
+    inline Utils::TextureMap::TextureMap* s_TextureMap;
 
-    static sf::Texture* s_BlockTexture;
+    inline sf::Texture* s_BlockTexture;
+    inline sf::Texture* s_WaterTexture;
+    inline sf::Texture* s_TreeTexture;
 
-    static sf::Texture* s_PlayerTexture_idle_1;
-    static sf::Texture* s_PlayerTexture_idle_2;
-    static sf::Texture* s_PlayerTexture_idle_3;
-    static sf::Texture* s_PlayerTexture_idle_4;
+    inline sf::Texture* s_PlayerTexture_idle_1;
+    inline sf::Texture* s_PlayerTexture_idle_2;
+    inline sf::Texture* s_PlayerTexture_idle_3;
+    inline sf::Texture* s_PlayerTexture_idle_4;
 
-    static sf::Texture* s_PlayerTexture_run_1;
-    static sf::Texture* s_PlayerTexture_run_2;
-    static sf::Texture* s_PlayerTexture_run_3;
-    static sf::Texture* s_PlayerTexture_run_4;
+    inline sf::Texture* s_PlayerTexture_run_1;
+    inline sf::Texture* s_PlayerTexture_run_2;
+    inline sf::Texture* s_PlayerTexture_run_3;
+    inline sf::Texture* s_PlayerTexture_run_4;
 
-    static sf::Texture* getTextureFromFile(const std::string& filename) {
+    inline sf::Texture* getTextureFromFile(const std::string& filename) {
         sf::Texture* texture = new sf::Texture();
         texture->loadFromFile(filename);
         return texture;
     }
 
-    static void loadTextures() {
-        s_TextureMap = new Utils::TextureMap::TextureMap(getTextureFromFile("images/textures.png"), Utils::vec2(Settings::BLOCK_SIZE, Settings::BLOCK_SIZE));
+    inline void loadTextures() {
+        s_TextureMap = new Utils::TextureMap::TextureMap(getTextureFromFile("images/textures.png"), Utils::vec2(Settings::ATLAS_SIZE, Settings::ATLAS_SIZE));
 
         s_BlockTexture  = s_TextureMap->getTexture(4, 0);
+        s_WaterTexture = s_TextureMap->getTexture(4, 1);
+        s_TreeTexture = s_TextureMap->getTexture(5, 0);
 
         s_PlayerTexture_idle_1 = s_TextureMap->getTexture(0, 0);
         s_PlayerTexture_idle_2 = s_TextureMap->getTexture(1, 0);
@@ -43,9 +47,12 @@ namespace Luntik::Renderer::Textures {
         s_PlayerTexture_run_4 = s_TextureMap->getTexture(3, 1);
     }
 
-    static void unloadTextures() {
+    inline void unloadTextures() {
         delete s_TextureMap;
+
         delete s_BlockTexture;
+        delete s_WaterTexture;
+        delete s_TreeTexture;
 
         delete s_PlayerTexture_idle_1;
         delete s_PlayerTexture_idle_2;

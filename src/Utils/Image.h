@@ -13,7 +13,7 @@ namespace Luntik::Utils {
     public:
         Image(sf::Texture* texture, Utils::vec2 stretchSize={ 0, 0 }) {
             this->m_StretchSize = stretchSize;
-            this->m_Texture = texture;
+            setTexture(texture);
 
             if (stretchSize == 0 && texture) {
                 this->m_Transform.setSize(vec2(texture->getSize()));
@@ -23,10 +23,15 @@ namespace Luntik::Utils {
         }
 
         sf::Sprite asSFMLSprite() {
-            sf::Sprite sprite(*m_Texture);
-            sprite.setPosition(m_Transform.getPosWithAlignment());
-            if (m_StretchSize != 0) sprite.setScale(m_StretchSize / vec2(m_Texture->getSize()));
-            return sprite;
+            m_SfmlSprite.setPosition(m_Transform.getPosWithAlignment());
+
+            if (m_StretchSize != 0) {
+                m_SfmlSprite.setScale(m_StretchSize / vec2(m_Texture->getSize()));
+                if (m_StretchSize.x < 0) m_SfmlSprite.setPosition(Utils::vec2(m_SfmlSprite.getPosition()) + Utils::vec2{ -m_StretchSize.x, 0 });
+                if (m_StretchSize.y < 0) m_SfmlSprite.setPosition(Utils::vec2(m_SfmlSprite.getPosition()) + Utils::vec2{ 0, -m_StretchSize.y });
+            }
+
+            return m_SfmlSprite;
         }
 
         sf::Texture* getTexture() {
@@ -34,7 +39,11 @@ namespace Luntik::Utils {
         }
 
         void setTexture(sf::Texture* texture) {
-            m_Texture = texture;
+            this->m_Texture = texture;
+
+            if (texture) {
+                this->m_SfmlSprite.setTexture(*texture);
+            }
             
             if (m_StretchSize == 0 && texture) {
                 this->m_Transform.setSize(vec2(texture->getSize()));
@@ -50,6 +59,7 @@ namespace Luntik::Utils {
         void setStretchSize(vec2 newStretchSize) { m_StretchSize = newStretchSize; if (newStretchSize != 0) this->m_Transform.setSize(newStretchSize); else this->m_Transform.setSize(vec2(m_Texture->getSize())); }
 
     private:
+        sf::Sprite m_SfmlSprite;
         sf::Texture* m_Texture;
         Transform m_Transform;
         vec2 m_StretchSize;

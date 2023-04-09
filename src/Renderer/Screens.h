@@ -7,6 +7,8 @@
 #include "RenderObjects/TextBox.h"
 #include "RenderObjects/RenderedPlayer.h"
 
+#include "../GameObjects/ChunkManager.h"
+
 #include "Screen.h"
 
 #include "Textures.h"
@@ -38,29 +40,14 @@ namespace Luntik::Renderer::Screens {
             amongusShader.setUniform("texture", sf::Shader::CurrentTexture);
             amongusShader.setUniform("bodyColor", sf::Vector3f(255.f, 0.f, 0.f));
 
-            blockSprite = std::make_unique<RenderObjects::Sprite>(Textures::s_BlockTexture, Utils::vec2{ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE });
-            blockSprite->getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
+            chunkManager = std::make_unique<GameObjects::ChunkManager>();
 
             renderedPlayer = std::make_unique<RenderObjects::RenderedPlayer>(&amongusShader);
-
-            text = std::make_unique<RenderObjects::Text>(
-                "Luntik",
-                Utils::Transform(
-                    Utils::vec2{ 0, 0 },
-                    Utils::vec2{ 0, 0 },
-                    Utils::Alignment::Alignment2D {
-                        Utils::Alignment::MIDDLE,
-                        Utils::Alignment::MIDDLE
-                    }
-                ),
-                Fonts::s_NormalFont,
-                16
-            );
         }
 
         void render(float deltaTime) override {
-            blockSprite->render(deltaTime);
-
+            chunkManager->render(deltaTime);
+            
             for (auto& [id, otherRenderedPlayer] : otherPlayers) {
                 otherRenderedPlayer->render(deltaTime);
             }
@@ -78,10 +65,9 @@ namespace Luntik::Renderer::Screens {
             otherPlayers.erase(id);
         }
 
+        std::unique_ptr<GameObjects::ChunkManager> chunkManager;
         std::unordered_map<uint32_t, std::unique_ptr<RenderObjects::RenderedPlayer>> otherPlayers;
         std::unique_ptr<RenderObjects::RenderedPlayer> renderedPlayer;
-        std::unique_ptr<RenderObjects::Sprite> blockSprite;
-        std::unique_ptr<RenderObjects::Text> text;
 
     private:
         sf::Shader amongusShader;
