@@ -3,6 +3,7 @@
 #include "SFML/Network.hpp"
 
 #include "../Utils/vec2.h"
+#include "../GameObjects/ChunkInfo.h"
 
 namespace Luntik::Network {
     using ID = uint32_t;
@@ -10,6 +11,9 @@ namespace Luntik::Network {
 
 namespace Luntik::Network::Packets {
     enum PacketType {
+        C2S_CHUNK_PACKET,
+        S2C_CHUNK_PACKET,
+
         C2S_COLOR_PACKET,
         S2C_COLOR_PACKET,
 
@@ -35,6 +39,21 @@ sf::Packet& operator>>(sf::Packet& packet, Luntik::Network::Packets::PacketType&
     std::underlying_type_t<Luntik::Network::Packets::PacketType> underlying;
     packet >> underlying;
     packetType = static_cast<Luntik::Network::Packets::PacketType>(underlying);
+    return packet;
+}
+
+
+sf::Packet& operator<<(sf::Packet& packet, const Luntik::GameObjects::BlockType& blockType)
+{
+    packet << static_cast<std::underlying_type_t<Luntik::GameObjects::BlockType>>(blockType);
+    return packet;
+}
+
+sf::Packet& operator>>(sf::Packet& packet, Luntik::GameObjects::BlockType& blockType)
+{
+    std::underlying_type_t<Luntik::GameObjects::BlockType> underlying;
+    packet >> underlying;
+    blockType = static_cast<Luntik::GameObjects::BlockType>(underlying);
     return packet;
 }
 
@@ -65,6 +84,44 @@ sf::Packet& operator>>(sf::Packet& packet, sf::Vector3f& vec)
 }
 
 
+sf::Packet& operator<<(sf::Packet& packet, const Luntik::GameObjects::ChunkPos& pos)
+{
+    packet << pos.x << pos.y;
+    return packet;
+}
+
+sf::Packet& operator>>(sf::Packet& packet, Luntik::GameObjects::ChunkPos& pos)
+{
+    packet >> pos.x >> pos.y;
+    return packet;
+}
+
+
+sf::Packet& operator<<(sf::Packet& packet, const Luntik::GameObjects::ChunkInfo& chunk)
+{
+    packet << chunk.pos;
+
+    for (int i = 0; i < Luntik::GameObjects::ChunkSize * Luntik::GameObjects::ChunkSize; i++) {
+        packet << chunk.blocks[i];
+    }
+
+    return packet;
+}
+
+sf::Packet& operator>>(sf::Packet& packet, Luntik::GameObjects::ChunkInfo& chunk)
+{
+    packet >> chunk.pos;
+
+    for (int i = 0; i < Luntik::GameObjects::ChunkSize * Luntik::GameObjects::ChunkSize; i++) {
+        Luntik::GameObjects::BlockType blockType;
+        packet >> blockType;
+        chunk.blocks[i] = blockType;
+    }
+
+    return packet;
+}
+
+
 namespace Luntik::Network::Packets {
     template<typename T>
     T read(sf::Packet& packet) {
@@ -80,6 +137,42 @@ namespace Luntik::Network::Packets {
 
         std::cout << "Could not read packet - packet does not have more bytes\n";
         throw std::runtime_error("Could not read packet - packet does not have more bytes");
+    }
+
+    // C2S_CHUNK_PACKET
+    struct C2S_ChunkPacketInfo {
+        GameObjects::ChunkPos pos{0, 0};
+    };
+
+    sf::Packet createC2SChunkPacket(const C2S_ChunkPacketInfo& info) {
+        sf::Packet packet;
+        packet << C2S_CHUNK_PACKET;
+        packet << info.pos;
+        return packet;
+    }
+
+    C2S_ChunkPacketInfo readC2SChunkPacket(sf::Packet& packet) {
+        C2S_ChunkPacketInfo info;
+        info.pos = read<GameObjects::ChunkPos>(packet);
+        return info;
+    }
+
+    // S2C_CHUNK_PACKET
+    struct S2C_ChunkPacketInfo {
+        GameObjects::ChunkInfo chunkInfo;
+    };
+
+    sf::Packet createS2CChunkPacket(const S2C_ChunkPacketInfo& info) {
+        sf::Packet packet;
+        packet << S2C_CHUNK_PACKET;
+        packet << info.chunkInfo;
+        return packet;
+    }
+
+    S2C_ChunkPacketInfo readS2CChunkPacket(sf::Packet& packet) {
+        S2C_ChunkPacketInfo info;
+        info.chunkInfo = read<GameObjects::ChunkInfo>(packet);
+        return info;
     }
 
     // C2S_COLOR_PACKET

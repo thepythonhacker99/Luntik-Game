@@ -50,6 +50,7 @@ namespace Luntik {
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_POSITION_PACKET, std::bind(&Client::handlePlayerPositionPacket, this, std::placeholders::_1));
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_NAME_PACKET, std::bind(&Client::handlePlayerNamePacket, this, std::placeholders::_1));
             m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_COLOR_PACKET, std::bind(&Client::handlePlayerColorPacket, this, std::placeholders::_1));
+            m_Client.setPacketReceiver(Network::Packets::PacketType::S2C_CHUNK_PACKET, std::bind(&Client::handleChunkInfoPacket, this, std::placeholders::_1));
 
             try {
                 m_Client.start();
@@ -58,6 +59,8 @@ namespace Luntik {
                 LOGGER.log(std::string("Error while connecting: ") + e.what());
                 m_ConnectionStatus = FAILED_TO_CONNECT;
             }
+
+            s_MainGameScreen->chunkManager->setSocket(m_Client.getSocket());
 
             m_PlayerInfo.name = s_IntroScreen->textBox->getText();
             s_MainGameScreen->renderedPlayer->setPlayer(&m_PlayerInfo);
@@ -219,6 +222,15 @@ namespace Luntik {
                 m_OtherPlayers.at(packetInfo.id).playerInfo.color = packetInfo.color;
             } catch (const std::exception& e) {
                 LOGGER.log(std::string("Error while handling a color packet: ") + e.what());
+            }
+        }
+        
+        void handleChunkInfoPacket(sf::Packet packet) {
+            try {
+                Network::Packets::S2C_ChunkPacketInfo packetInfo = Network::Packets::readS2CChunkPacket(packet);
+                s_MainGameScreen->chunkManager->handleNewChunkInfo(packetInfo.chunkInfo);
+            } catch (const std::exception& e) {
+                LOGGER.log(std::string("Error while handling a chunk packet: ") + e.what());
             }
         }
 

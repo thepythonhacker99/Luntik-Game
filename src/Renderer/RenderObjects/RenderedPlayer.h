@@ -34,7 +34,7 @@ namespace Luntik::Renderer::RenderObjects {
             )
         {
             m_Sprite.setAnimationKey(Animations::PLAYER_ANIMATIONS::IDLE);
-            m_Sprite.getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
+            // m_Sprite.getImage()->getTransform().setAlignment({ Utils::Alignment::MIDDLE, Utils::Alignment::MIDDLE });
         }
 
         void render(float deltaTime) override {
@@ -57,7 +57,7 @@ namespace Luntik::Renderer::RenderObjects {
             m_Sprite.render(deltaTime);
 
             // PLAYER NAME
-            m_NameText.setPos(Utils::vec2{ m_Player->pos.x, m_Sprite.getImage()->getTransform().getPosWithAlignment().y });
+            m_NameText.setPos(Utils::vec2{ m_Player->pos.x + (Settings::BLOCK_SIZE / 2), m_Sprite.getImage()->getTransform().getPosWithAlignment().y });
             m_NameText.render(deltaTime);
         }
 

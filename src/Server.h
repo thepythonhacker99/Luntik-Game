@@ -23,6 +23,7 @@ namespace Luntik {
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_POSITION_PACKET, std::bind(&Server::handleC2SPositionPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_NAME_PACKET, std::bind(&Server::handleC2SNamePacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_COLOR_PACKET, std::bind(&Server::handleC2SColorPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            m_SocketSever.setPacketReceiver(Network::Packets::C2S_CHUNK_PACKET, std::bind(&Server::handleC2SChunkPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         }
 
         ~Server() {
@@ -186,6 +187,22 @@ namespace Luntik {
                 }
             } catch (const std::runtime_error& e) {
                 std::cout << "Error while reading packet of type: C2S_COLOR_PACKET\n";
+                std::cout << "Sender ID: " << senderId << "\n";
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        }
+
+        void handleC2SChunkPacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
+            try {
+                Network::Packets::C2S_ChunkPacketInfo packetInfo = Network::Packets::readC2SChunkPacket(packet);
+                
+                GameObjects::ChunkInfo chunk(packetInfo.pos);
+                GameObjects::generateChunk(chunk);
+
+                sf::Packet chunkPacket = Network::Packets::createS2CChunkPacket({ chunk });
+                senderSocket->send(chunkPacket);
+            } catch (const std::runtime_error& e) {
+                std::cout << "Error while reading packet of type: C2S_CHUNK_PACKET\n";
                 std::cout << "Sender ID: " << senderId << "\n";
                 std::cout << "Error: " << e.what() << std::endl;
             }

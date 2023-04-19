@@ -12,6 +12,12 @@
 #include "PlayerInfo.h"
 
 namespace Luntik::GameObjects {
+    inline const std::vector<Utils::vec2> playerChunkOffsets = {
+        {  0,  0 },   {  0, -1 }, {  0,  1 },
+        {  1,  0 },   {  1,  1 }, {  1, -1 },
+        { -1, -1 },   { -1,  1 }, { -1,  1 }, 
+    };
+
     class ClientPlayerController {
     public:
         ClientPlayerController(PlayerInfo* player) {
@@ -40,7 +46,14 @@ namespace Luntik::GameObjects {
 
             m_Vel += Utils::vec2::normalize(m_PlayerToControl->acc) * Settings::PLAYER_SPEED * deltaTime;
             m_Vel -= m_Vel * Settings::FRICTION * deltaTime;
-            m_PlayerToControl->pos += m_Vel * deltaTime;
+
+            // move on x
+            m_PlayerToControl->pos.x += m_Vel.x * deltaTime;
+            resolveCollisionsOnX();
+
+            // move on y
+            m_PlayerToControl->pos.y += m_Vel.y * deltaTime;
+            resolveCollisionsOnY();
 
             s_MainGameScreen->setCameraPos(m_PlayerToControl->pos);
         }
@@ -49,6 +62,76 @@ namespace Luntik::GameObjects {
         void setVel(Utils::vec2 v) { m_Vel = v; }
 
     private:
+        void resolveCollisionsOnX() {
+            if (m_Vel.x == 0) return;
+
+            ChunkPos currentPlayerChunkPos = getChunkOfPixel(m_PlayerToControl->pos);
+
+            for (const Utils::vec2& offset : playerChunkOffsets) {
+                ChunkPos currentChunkPos(currentPlayerChunkPos.x + offset.x, currentPlayerChunkPos.y + offset.y);
+
+                ChunkInfo* currentChunkInfo = s_MainGameScreen->chunkManager->getChunkInfoAtChunkPos(currentChunkPos);
+                if (!currentChunkInfo) continue;
+
+                for (int x = 0; x < ChunkSize; x++) {
+                    for (int y = 0; y < ChunkSize; y++) {
+                        BlockType blockType = currentChunkInfo->at(x, y);
+
+                        if (blockType & WATER) {
+                            // player can collide with this block
+                            Utils::vec2 blockPosInPx = Utils::vec2(currentChunkPos.x * ChunkSizeInPx + x * Settings::BLOCK_SIZE, currentChunkPos.y * ChunkSizeInPx + y * Settings::BLOCK_SIZE);
+
+                            if (Utils::AABB(m_PlayerToControl->pos + 2, Utils::vec2({Settings::BLOCK_SIZE, Settings::BLOCK_SIZE}) - 4, blockPosInPx, Utils::vec2({ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE }))) {
+                                // in collision with this block
+                                if (m_Vel.x > 0) {
+                                    m_PlayerToControl->pos.x = blockPosInPx.x - Settings::BLOCK_SIZE + 2;
+                                } else if (m_Vel.x < 0) {
+                                    m_PlayerToControl->pos.x = blockPosInPx.x + Settings::BLOCK_SIZE - 2;
+                                }
+                                m_Vel.x = 0;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        void resolveCollisionsOnY() {
+            if (m_Vel.y == 0) return;
+
+            ChunkPos currentPlayerChunkPos = getChunkOfPixel(m_PlayerToControl->pos);
+
+            for (const Utils::vec2& offset : playerChunkOffsets) {
+                ChunkPos currentChunkPos(currentPlayerChunkPos.x + offset.x, currentPlayerChunkPos.y + offset.y);
+                ChunkInfo* currentChunkInfo = s_MainGameScreen->chunkManager->getChunkInfoAtChunkPos(currentChunkPos);
+
+                if (!currentChunkInfo) continue;
+
+                for (int x = 0; x < ChunkSize; x++) {
+                    for (int y = 0; y < ChunkSize; y++) {
+                        BlockType blockType = currentChunkInfo->at(x, y);
+
+                        if (blockType & WATER) {
+                            // player can collide with this block
+                            Utils::vec2 blockPosInPx = Utils::vec2(currentChunkPos.x * ChunkSizeInPx + x * Settings::BLOCK_SIZE, currentChunkPos.y * ChunkSizeInPx + y * Settings::BLOCK_SIZE);
+
+                            if (Utils::AABB(m_PlayerToControl->pos + 2, Utils::vec2({Settings::BLOCK_SIZE, Settings::BLOCK_SIZE}) - 4, blockPosInPx, Utils::vec2({ Settings::BLOCK_SIZE, Settings::BLOCK_SIZE }))) {
+                                // in collision with this block
+                                if (m_Vel.y > 0) {
+                                    m_PlayerToControl->pos.y = blockPosInPx.y - Settings::BLOCK_SIZE + 2;
+                                } else if (m_Vel.y < 0) {
+                                    m_PlayerToControl->pos.y = blockPosInPx.y + Settings::BLOCK_SIZE - 2;
+                                }
+                                m_Vel.y = 0;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         PlayerInfo* m_PlayerToControl;
         Utils::vec2 m_Vel;
     };

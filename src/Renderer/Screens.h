@@ -8,6 +8,7 @@
 #include "RenderObjects/RenderedPlayer.h"
 
 #include "../GameObjects/ChunkManager.h"
+#include "../GameObjects/MultiplayerChunkManager.h"
 
 #include "Screen.h"
 
@@ -38,11 +39,17 @@ namespace Luntik::Renderer::Screens {
             }
 
             amongusShader.setUniform("texture", sf::Shader::CurrentTexture);
-            amongusShader.setUniform("bodyColor", sf::Vector3f(255.f, 0.f, 0.f));
+            amongusShader.setUniform("bodyColor", sf::Vector3f(1.0f, 1.0f, 1.0f));
 
-            chunkManager = std::make_unique<GameObjects::ChunkManager>();
-
+            chunkManager = std::make_unique<GameObjects::MultiplayerChunkManager>(nullptr);
             renderedPlayer = std::make_unique<RenderObjects::RenderedPlayer>(&amongusShader);
+
+            coords = std::make_unique<RenderObjects::Text>(
+                "XY:",
+                Utils::Transform{},
+                Fonts::s_NormalFont,
+                10
+            );
         }
 
         void render(float deltaTime) override {
@@ -53,6 +60,10 @@ namespace Luntik::Renderer::Screens {
             }
 
             renderedPlayer->render(deltaTime);
+
+            coords->setPos(Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter()) - (Utils::vec2(s_Renderer->getWindow()->getCamera()->getSize()) / 2.f) + Utils::vec2{ 10, 10 });
+            coords->setText("XY: " + std::to_string(renderedPlayer->getPlayer()->pos.x / Settings::BLOCK_SIZE) + " " + std::to_string(renderedPlayer->getPlayer()->pos.y / Settings::BLOCK_SIZE));
+            coords->render(deltaTime);
         }
 
         void addOtherPlayer(uint32_t id, GameObjects::PlayerInfo* otherPlayerInfo) {
@@ -65,9 +76,10 @@ namespace Luntik::Renderer::Screens {
             otherPlayers.erase(id);
         }
 
-        std::unique_ptr<GameObjects::ChunkManager> chunkManager;
+        std::unique_ptr<GameObjects::MultiplayerChunkManager> chunkManager;
         std::unordered_map<uint32_t, std::unique_ptr<RenderObjects::RenderedPlayer>> otherPlayers;
         std::unique_ptr<RenderObjects::RenderedPlayer> renderedPlayer;
+        std::unique_ptr<RenderObjects::Text> coords;
 
     private:
         sf::Shader amongusShader;
