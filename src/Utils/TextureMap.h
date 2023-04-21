@@ -25,13 +25,13 @@ namespace Luntik::Utils::TextureMap {
             this->m_ImagesOnY = texture->getSize().y / imageSize.y;
         }
 
-        sf::IntRect getTextureRect(int xIndex, int yIndex) {
-            return sf::IntRect(int(m_ImageSize.x * (float)xIndex), int(m_ImageSize.y * (float)yIndex), int(m_ImageSize.x), int(m_ImageSize.y));
+        sf::IntRect getTextureRect(int xIndex, int yIndex, int sizeMultiplierX=1, int sizeMultiplierY=1) {
+            return sf::IntRect(int(m_ImageSize.x * (float)xIndex), int(m_ImageSize.y * (float)yIndex), (int)m_ImageSize.x * sizeMultiplierX, (int)m_ImageSize.y * sizeMultiplierY);
         }
 
-        sf::Texture* getTexture(int xIndex, int yIndex) {
+        sf::Texture* getTexture(int xIndex, int yIndex, int sizeMultiplierX=1, int sizeMultiplierY=1) {
             sf::Texture* texture = new sf::Texture();
-            texture->loadFromImage(m_Texture->copyToImage(), sf::IntRect(int(m_ImageSize.x * (float)xIndex), int(m_ImageSize.y * (float)yIndex), (int)m_ImageSize.x, (int)m_ImageSize.y));
+            texture->loadFromImage(m_Texture->copyToImage(), getTextureRect(xIndex, yIndex, sizeMultiplierX, sizeMultiplierY));
             return std::move(texture);
         }
 

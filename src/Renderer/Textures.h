@@ -34,7 +34,7 @@ namespace Luntik::Renderer::Textures {
 
         s_BlockTexture  = s_TextureMap->getTexture(4, 0);
         s_WaterTexture = s_TextureMap->getTexture(4, 1);
-        s_TreeTexture = s_TextureMap->getTexture(5, 0);
+        s_TreeTexture = s_TextureMap->getTexture(5, 0, 2, 2);
 
         s_PlayerTexture_idle_1 = s_TextureMap->getTexture(0, 0);
         s_PlayerTexture_idle_2 = s_TextureMap->getTexture(1, 0);

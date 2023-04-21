@@ -61,7 +61,7 @@ namespace Luntik::Renderer::Screens {
 
             renderedPlayer->render(deltaTime);
 
-            coords->setPos(Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter()) - (Utils::vec2(s_Renderer->getWindow()->getCamera()->getSize()) / 2.f) + Utils::vec2{ 10, 10 });
+            coords->setPos(Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter()) - (Utils::vec2(s_Renderer->getWindow()->getCamera()->getSize()) / 2.f) + Utils::vec2{10, 10});
             coords->setText("XY: " + std::to_string(renderedPlayer->getPlayer()->pos.x / Settings::BLOCK_SIZE) + " " + std::to_string(renderedPlayer->getPlayer()->pos.y / Settings::BLOCK_SIZE));
             coords->render(deltaTime);
         }

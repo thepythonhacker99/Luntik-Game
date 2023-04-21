@@ -13,6 +13,7 @@ namespace Luntik::Settings {
     constexpr float SCREEN_SPEED = 5.f;
 
     constexpr float PLAYER_SPEED = 1200.f;
+    // constexpr float PLAYER_SPEED = 12000.f;
     // constexpr float PLAYER_SPEED = 12000000.f;
     constexpr float FRICTION = 9.f;
 
