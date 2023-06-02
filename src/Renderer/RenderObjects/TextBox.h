@@ -146,10 +146,6 @@ namespace Luntik::Renderer::RenderObjects {
         void setText(const std::string& text) { m_Text = text; }
         const std::string& getText() const { return m_Text; }
     private:
-        bool isClicked() {
-
-        }
-
         void updateInternalText(char c) {
             if (c != BACKSPACE) {
                 if (m_Text.size() < m_MaxSize || m_MaxSize == 0) m_Text += c;
