@@ -80,6 +80,10 @@ namespace Luntik {
 
                 Utils::KeySystem::s_KeySystem->update();
 
+                if (Utils::KeySystem::s_KeySystem->keyState(sf::Keyboard::F11) == Utils::KeySystem::JUST_PRESSED) {
+                    s_Renderer->getWindow()->toggleFullScreen();
+                }
+
                 switch (s_Renderer->getScreen()->ID) {
                     case Renderer::Screens::MAIN_GAME_SCREEN:
                         tickClient(deltaTime);

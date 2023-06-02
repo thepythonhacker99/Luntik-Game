@@ -9,11 +9,13 @@
 namespace Luntik::Renderer {
     class Window {
     public:
-        Window(const char* window_name) {
-            m_Window = new sf::RenderWindow(sf::VideoMode(1280, 720), window_name);
+        Window(std::string windowName) : m_WindowName(windowName) {
             m_Camera = new Camera();
+            m_Window = new sf::RenderWindow(sf::VideoMode(1280, 720), m_WindowName, sf::Style::Default);
 
             m_Window->setView(*m_Camera);
+
+            m_FullScreenVideoMode = sf::VideoMode::getFullscreenModes()[0];
         }
 
         ~Window() {
@@ -33,8 +35,37 @@ namespace Luntik::Renderer {
         Camera* getCamera() const {
             return m_Camera;
         }
+
+        bool getFullScreen() const { return m_FullScreen; }
+
+        void setFullScreen(bool fullScreen) {
+            m_FullScreen = fullScreen;
+            initWindow();
+        }
+
+        void toggleFullScreen() {
+            m_FullScreen = !m_FullScreen;
+            initWindow();
+        }
+
     private:
+        void initWindow() {
+            if (!m_FullScreen) {
+                m_Window->create(sf::VideoMode(1280, 720), m_WindowName, sf::Style::Default);
+            } else {
+                m_Window->create(m_FullScreenVideoMode, m_WindowName, sf::Style::Fullscreen);
+            }
+
+            fixAspect();
+        }
+
+        bool m_FullScreen = false;
+
         sf::RenderWindow* m_Window;
         Camera* m_Camera;
+
+        std::string m_WindowName;
+
+        sf::VideoMode m_FullScreenVideoMode;
     };
 }
