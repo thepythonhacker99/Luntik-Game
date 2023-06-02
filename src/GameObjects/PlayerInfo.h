@@ -11,11 +11,16 @@ namespace Luntik::GameObjects {
         Utils::vec2 pos;
         Utils::vec2 acc;
         std::string name = "\n";
+        float health = 10;
 
         bool isReady() {
             return
                 name != "\n" &&
                 color != sf::Vector3f(-1, -1, -1);
+        }
+
+        void setHealth(int h) {
+            health = h;
         }
     };
 }

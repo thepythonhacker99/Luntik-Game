@@ -17,6 +17,9 @@ namespace Luntik::Network::Packets {
         C2S_COLOR_PACKET,
         S2C_COLOR_PACKET,
 
+        C2S_SHOOT_PACKET,
+        S2C_SHOOT_PACKET,
+
         C2S_NAME_PACKET,
         S2C_NAME_PACKET,
 
@@ -211,6 +214,24 @@ namespace Luntik::Network::Packets {
         S2C_ColorPacketInfo info;
         info.id = read<ID>(packet);
         info.color = read<sf::Vector3f>(packet);
+        return info;
+    }
+
+    // C2S_SHOOT_PACKET
+    struct C2S_ShootPacketInfo {
+        Utils::vec2 dir;
+    };
+
+    sf::Packet createC2SShootPacket(const C2S_ShootPacketInfo& info) {
+        sf::Packet packet;
+        packet << C2S_SHOOT_PACKET;
+        packet << info.dir;
+        return packet;
+    }
+
+    C2S_ShootPacketInfo readC2SShootPacket(sf::Packet& packet) {
+        C2S_ShootPacketInfo info;
+        info.dir = read<Utils::vec2>(packet);
         return info;
     }
 

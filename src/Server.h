@@ -10,6 +10,7 @@
 #include "Networking/SocketServer.h"
 
 #include "GameObjects/PlayerInfo.h"
+#include "GameObjects/Bullet.h"
 
 namespace Luntik {
     class Server {
@@ -24,6 +25,7 @@ namespace Luntik {
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_NAME_PACKET, std::bind(&Server::handleC2SNamePacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_COLOR_PACKET, std::bind(&Server::handleC2SColorPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             m_SocketSever.setPacketReceiver(Network::Packets::C2S_CHUNK_PACKET, std::bind(&Server::handleC2SChunkPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            m_SocketSever.setPacketReceiver(Network::Packets::C2S_SHOOT_PACKET, std::bind(&Server::handleC2SShootPacket, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         }
 
         ~Server() {
@@ -208,11 +210,26 @@ namespace Luntik {
             }
         }
 
+        void handleC2SShootPacket(Network::ID senderId, sf::TcpSocket* senderSocket, sf::Packet packet) {
+            try {
+                Network::Packets::C2S_ShootPacketInfo packetInfo = Network::Packets::readC2SShootPacket(packet);
+
+                // TODO: finish
+
+            } catch (const std::runtime_error& e) {
+                std::cout << "Error while reading packet of type: C2S_SHOOT_PACKET\n";
+                std::cout << "Sender ID: " << senderId << "\n";
+                std::cout << "Error: " << e.what() << std::endl;
+            }
+        }
+
         Utils::Logger LOGGER{"Luntik::Server"};
 
         // SERVER VARS
         std::unordered_map<Network::ID, GameObjects::PlayerInfo> m_TempPlayers;
         std::unordered_map<Network::ID, GameObjects::PlayerInfo> m_Players;
+
+        std::vector<GameObjects::Bullet> m_Bullets;
         
         // NETWORKING
         short m_Port;

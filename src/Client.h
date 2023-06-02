@@ -59,9 +59,7 @@ namespace Luntik {
                 LOGGER.log(std::string("Error while connecting: ") + e.what());
                 m_ConnectionStatus = FAILED_TO_CONNECT;
             }
-
-            s_MainGameScreen->chunkManager->setSocket(m_Client.getSocket());
-
+            
             m_PlayerInfo.name = s_IntroScreen->textBox->getText();
             s_MainGameScreen->renderedPlayer->setPlayer(&m_PlayerInfo);
 
@@ -70,10 +68,10 @@ namespace Luntik {
             m_PlayerInfo.color.z = Random::get(0.f, 1.f);
 
             sf::Packet namePacket = Network::Packets::createC2SNamePacket({ m_PlayerInfo.name });
-            m_Client.getSocket()->send(namePacket);
+            s_ClientSocket->send(namePacket);
 
             sf::Packet colorPacket = Network::Packets::createC2SColorPacket({ m_PlayerInfo.color });
-            m_Client.getSocket()->send(colorPacket);
+            s_ClientSocket->send(colorPacket);
         }
 
         ~Client() {
@@ -103,7 +101,7 @@ namespace Luntik {
 
             if (m_SendPositionTimer.should_run_code(deltaTime)) {
                 sf::Packet posPacket = Network::Packets::createC2SPositionPacket({ m_PlayerInfo.pos, m_PlayerInfo.acc });
-                m_Client.getSocket()->send(posPacket);
+                s_ClientSocket->send(posPacket);
             }
         }
 

@@ -4,20 +4,21 @@
 #include <mutex>
 #include <thread>
 
+#include "GameState.h"
+
 #include "Renderer/Textures.h"
 #include "Renderer/Animations.h"
 #include "Renderer/Fonts.h"
 
-#include "GameState.h"
+#include "Renderer/Screens.h"
+#include "Renderer/Renderer.h"
+
 #include "Client.h"
 #include "Server.h"
 
 #include "Utils/KeySystem.h"
 #include "Utils/Logger.h"
 #include "Utils/FrameRate.h"
-
-#include "Renderer/Screens.h"
-#include "Renderer/Renderer.h"
 
 #include "SFML/Network.hpp"
 

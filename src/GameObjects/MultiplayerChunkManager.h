@@ -13,7 +13,7 @@
 namespace Luntik::GameObjects {
     class MultiplayerChunkManager : public BasicChunkManager {
     public:
-        MultiplayerChunkManager(sf::TcpSocket* socket) : m_Socket(socket) {
+        MultiplayerChunkManager() {
             updateVisibleChunks();
         }
 
@@ -30,20 +30,15 @@ namespace Luntik::GameObjects {
             }
         }
 
-        void setSocket(sf::TcpSocket* socket) { m_Socket = socket; }
-        sf::TcpSocket* getSocket() const { return m_Socket; }
-
     private:
         void sendChunkPacket(const ChunkInfo& chunk) {
-            if (!m_Socket) return;
+            if (!s_ClientSocket) return;
             sf::Packet chunkPacket = Network::Packets::createC2SChunkPacket({ chunk.pos });
-            m_Socket->send(chunkPacket);
+            s_ClientSocket->send(chunkPacket);
         }
 
         void onGenerateChunk(ChunkInfo& chunk) override {
             sendChunkPacket(chunk);
         }
-
-        sf::TcpSocket* m_Socket;
     };
 }

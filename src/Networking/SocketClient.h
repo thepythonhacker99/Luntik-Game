@@ -11,6 +11,7 @@
 #include <queue>
 #include <functional>
 #include <unordered_map>
+#include <memory>
 
 namespace Luntik::Network {
 
@@ -20,18 +21,18 @@ namespace Luntik::Network {
         using CallbackOnDisconnected = std::function<void()>;
 
         SocketClient(sf::IpAddress addr, short port) : m_Port(port), m_Address(addr) {
-            
+            s_ClientSocket.reset(new sf::TcpSocket());
         }
 
         ~SocketClient() {
-            
+            s_ClientSocket.reset();
         }
 
         void setOnDisconnectedFromServerCallback(CallbackOnDisconnected callback) { m_CallbackOnDisconnectedFromServer = callback; }
         void setPacketReceiver(Packets::PacketType packetType, CallbackOnPacketReceived callback) { m_CallbacksOnPacketReceived[packetType] = callback; }
 
         void start() {
-            if (m_Socket.connect(m_Address, m_Port, sf::seconds(3.f)) == sf::Socket::Done) {
+            if (s_ClientSocket->connect(m_Address, m_Port, sf::seconds(3.f)) == sf::Socket::Done) {
                 LOGGER.log("Connected to server: " + m_Address.toString() + " " + std::to_string(m_Port));
                 m_Running = true;
                 m_Listen = true;
@@ -61,7 +62,7 @@ namespace Luntik::Network {
             {
                 std::lock_guard<std::mutex> lock(m_ListenMutex);
                 m_Listen = false;
-                m_Socket.disconnect();
+                s_ClientSocket->disconnect();
             }
             /////
 
@@ -77,10 +78,6 @@ namespace Luntik::Network {
             
             /////
             LOGGER.log("Successfully shutdown the socket client");
-        }
-
-        sf::TcpSocket* getSocket() {
-            return &m_Socket;
         }
 
     private:
@@ -120,7 +117,7 @@ namespace Luntik::Network {
 
                 try {
                     sf::Packet packet;
-                    sf::Socket::Status receiveStatus = m_Socket.receive(packet);
+                    sf::Socket::Status receiveStatus = s_ClientSocket->receive(packet);
 
                     if (receiveStatus != sf::Socket::Done) {
                         LOGGER.log("Receive status is not sf::Socket::Done. (Status: " + std::to_string(receiveStatus) + ")");
@@ -148,7 +145,7 @@ namespace Luntik::Network {
             }
 
             LOGGER.log("Finished listening");
-            m_Socket.disconnect();
+            s_ClientSocket->disconnect();
         }
 
         Utils::Logger LOGGER{"Luntik::SocketClient"};
@@ -170,8 +167,6 @@ namespace Luntik::Network {
         CallbackOnDisconnected m_CallbackOnDisconnectedFromServer = {};
 
         // LISTENER
-        sf::TcpSocket m_Socket;
-
         bool m_Listen = false;
         std::mutex m_ListenMutex;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SimplexNoise.hpp"
+#include "SFML/Network.hpp"
 
 namespace Luntik {
     class Client;
@@ -20,6 +21,9 @@ namespace Luntik::Renderer::Screens {
 
 namespace Luntik {
     inline std::unique_ptr<Renderer::Renderer> s_Renderer;
+
+    inline std::unique_ptr<sf::TcpSocket> s_ClientSocket;
+
     inline std::unique_ptr<Client> s_Client;
     inline std::unique_ptr<Server> s_Server;
 
@@ -34,13 +38,17 @@ namespace Luntik {
 namespace Luntik::GameState {
     inline void uninitGameState() {
         s_Renderer.reset();
+
+        s_ClientSocket.reset();
+
         s_Client.reset();
         s_Server.reset();
-        s_PerlinNoise.reset();
 
         s_MainGameScreen.reset();
         s_IntroScreen.reset();
         s_DisconnectedScreen.reset();
         s_PauseScreen.reset();
+
+        s_PerlinNoise.reset();
     }
 }

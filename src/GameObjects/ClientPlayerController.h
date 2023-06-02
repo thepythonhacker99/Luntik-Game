@@ -28,7 +28,19 @@ namespace Luntik::GameObjects {
 
         }
 
+        void shoot() {
+            // dir => player_pos <-> mouse_pos_including_camera
+            Utils::vec2 mouse = Renderer::getMousePosRelativeToWorld() - Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter());
+            Utils::vec2 dir = mouse - (m_PlayerToControl->pos + (Settings::BLOCK_SIZE / 2.f));
+            std::cout << (std::string)dir << std::endl;
+
+            // send shooting packet to the server
+            sf::Packet packet = Network::Packets::createC2SShootPacket({ dir });
+            s_ClientSocket->send(packet);
+        }
+
         void tick(float deltaTime) {
+            // movement
             m_PlayerToControl->acc = { 0, 0 };
 
             if (Utils::KeySystem::s_KeySystem->keyState(Settings::PLAYER_LEFT) == Utils::KeySystem::PRESSED) {
@@ -55,7 +67,12 @@ namespace Luntik::GameObjects {
             m_PlayerToControl->pos.y += m_Vel.y * deltaTime;
             resolveCollisionsOnY();
 
-            s_MainGameScreen->setCameraPos(m_PlayerToControl->pos);
+            s_MainGameScreen->setCameraPos(m_PlayerToControl->pos + (Settings::BLOCK_SIZE / 2.f));
+
+            //shooting
+            if (Utils::KeySystem::s_KeySystem->mouseLeft == Utils::KeySystem::JUST_PRESSED) {
+                shoot();
+            }
         }
 
         Utils::vec2 getVel() const { return m_Vel; }

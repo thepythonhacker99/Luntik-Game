@@ -56,4 +56,9 @@ namespace Luntik::Renderer {
         Screen* m_Screen;
         std::unique_ptr<Window> m_Window;
     };
+
+    Utils::vec2 getMousePosRelativeToWorld() {
+        return Utils::vec2(Luntik::s_Renderer->getWindow()->getSFMLWindow()->mapPixelToCoords(sf::Mouse::getPosition(*s_Renderer->getWindow()->getSFMLWindow()))) + Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter());
+        // return Utils::vec2(Luntik::s_Renderer->getWindow()->getSFMLWindow()->mapPixelToCoords(sf::Mouse::getPosition(*s_Renderer->getWindow()->getSFMLWindow()))) + Utils::vec2(s_Renderer->getWindow()->getCamera()->getCenter());
+    }
 }
