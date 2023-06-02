@@ -41,7 +41,6 @@ namespace Luntik::Renderer::Screens {
             amongusShader.setUniform("texture", sf::Shader::CurrentTexture);
             amongusShader.setUniform("bodyColor", sf::Vector3f(1.0f, 1.0f, 1.0f));
 
-
             chunkManager = std::make_unique<GameObjects::MultiplayerChunkManager>();
             renderedPlayer = std::make_unique<RenderObjects::RenderedPlayer>(&amongusShader);
 
